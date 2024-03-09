@@ -8,7 +8,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.tasks.Adapters.DoneTaskAdapter;
 import com.example.tasks.Adapters.TaskAdapter;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 
 public class DoneTasksActivity extends MasterActivity {
 
+    private TextView tVClass, tVChecked;
     private ListView lVDone;
     private ArrayList<Task> doneTasksList;
     private DoneTaskAdapter doneTaskAdp;
@@ -30,6 +33,8 @@ public class DoneTasksActivity extends MasterActivity {
 
     int activeYear;
     private ValueEventListener vel;
+    private boolean orderChecked = false;
+    private boolean orderClass = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +57,8 @@ public class DoneTasksActivity extends MasterActivity {
     }
 
     private void initViews() {
+        tVClass = findViewById(R.id.tVClass);
+        tVChecked = findViewById(R.id.tVChecked);
         lVDone = findViewById(R.id.lVDone);
         activeYear = settings.getInt("activeYear",1970);
 
@@ -73,5 +80,37 @@ public class DoneTasksActivity extends MasterActivity {
             public void onCancelled(@NonNull DatabaseError error) {
             }
         };
+    }
+
+    public void orderByClass(View view) {
+        if (orderClass) {
+            doneTasksList.sort((o1, o2)
+                    -> o1.getClassName().compareTo(
+                    o2.getClassName()));
+            tVClass.setText("Class ↑");
+        } else {
+            doneTasksList.sort((o1, o2)
+                    -> o2.getClassName().compareTo(
+                    o1.getClassName()));
+            tVClass.setText("Class ↓");
+        }
+        orderClass = !orderClass;
+        doneTaskAdp.notifyDataSetChanged();
+    }
+
+    public void orderByChecked(View view) {
+        if (orderChecked) {
+            doneTasksList.sort((o1, o2)
+                    -> o1.getDateChecked().compareTo(
+                    o2.getDateChecked()));
+            tVChecked.setText("Checked ↑");
+        } else {
+            doneTasksList.sort((o1, o2)
+                    -> o2.getDateChecked().compareTo(
+                    o1.getDateChecked()));
+            tVChecked.setText("Checked ↓");
+        }
+        orderChecked = !orderChecked;
+        doneTaskAdp.notifyDataSetChanged();
     }
 }
