@@ -83,20 +83,22 @@ public class TaskActivity extends MasterActivity implements AdapterView.OnItemSe
         cbFullClass = findViewById(R.id.cbFullClass);
         btnTask = findViewById(R.id.btnTask);
         gi = getIntent();
-        isNewTask = gi.getBooleanExtra("isNewTask",true);
         activeYear = gi.getIntExtra("activeYear",1970);
         if (activeYear == 1970) {
-            Intent si = new Intent(TaskActivity.this,YearsActivity.class);
-            startActivity(si);
+            Toast.makeText(this, "Wrong data sent", Toast.LENGTH_LONG).show();
+            finish();
         }
-        if (!isNewTask){
-            choose = gi.getIntExtra("choose",-1);
-            task = MainActivity.tasksList.get(choose);
-        }
+        isNewTask = gi.getBooleanExtra("isNewTask",true);
+//        if (!isNewTask){
+//            choose = gi.getIntExtra("choose",-1);
+//            task = MainActivity.tasksList.get(choose);
+//        }
         if (isNewTask) {
             tVTaskHeader.setText("Add new Task");
             btnTask.setText("Add Task");
         } else {
+            choose = gi.getIntExtra("choose",-1);
+            task = MainActivity.tasksList.get(choose);
             tVTaskHeader.setText("Edit Task");
             startDate = task.getDateStart();
             tVStartDate.setText(db2Dsiplay(task.getDateStart()));

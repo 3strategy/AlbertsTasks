@@ -145,7 +145,7 @@ public class MainActivity extends MasterActivity implements AdapterView.OnItemCl
         if (action.equals("Edit")) {
             Intent intent = new Intent(this, TaskActivity.class);
             intent.putExtra("isNewTask",false);
-            intent.putExtra("currentYear",activeYear);
+            intent.putExtra("activeYear",activeYear);
             intent.putExtra("choose",choose);
             startActivity(intent);
         } else if (action.equals("Delete")) {
