@@ -114,7 +114,7 @@ public class MainActivity extends MasterActivity implements AdapterView.OnItemCl
     public void addTask(View view) {
         Intent intent = new Intent(this, TaskActivity.class);
         intent.putExtra("isNewTask",true);
-        intent.putExtra("currentYear",activeYear);
+        intent.putExtra("activeYear",activeYear);
         startActivity(intent);
     }
 
