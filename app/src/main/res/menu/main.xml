@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/idMain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Main" />
+    <item
+        android:id="@+id/idTasksDone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Tasks Done" />
+    <item
+        android:id="@+id/idYears"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Years" />
+    <item
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <item
+        android:id="@+id/idDisconnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Disconnect and Exit" />
+    <item
+        android:id="@+id/idExit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Exit" />
+</menu>
