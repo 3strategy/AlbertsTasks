@@ -6,6 +6,7 @@ import static com.example.tasks.FBRef.refTasks;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -27,6 +28,7 @@ public class DoneTasksActivity extends MasterActivity {
 
     private TextView tVClass, tVChecked;
     private ListView lVDone;
+    private ProgressDialog pd;
     private ArrayList<Task> doneTasksList;
     private DoneTaskAdapter doneTaskAdp;
     private SharedPreferences settings;
@@ -61,6 +63,7 @@ public class DoneTasksActivity extends MasterActivity {
         tVChecked = findViewById(R.id.tVChecked);
         lVDone = findViewById(R.id.lVDone);
         activeYear = settings.getInt("activeYear",1970);
+        pd= ProgressDialog.show(this,"Connecting Database","Gathering data...",true);
 
         doneTasksList = new ArrayList<Task>();
         doneTaskAdp = new DoneTaskAdapter(DoneTasksActivity.this, doneTasksList);
@@ -75,6 +78,9 @@ public class DoneTasksActivity extends MasterActivity {
                     }
                 }
                 doneTaskAdp.notifyDataSetChanged();
+                if (pd != null) {
+                    pd.dismiss();
+                }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {

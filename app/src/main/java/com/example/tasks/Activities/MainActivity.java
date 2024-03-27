@@ -8,6 +8,7 @@ import static com.example.tasks.Utilities.db2Dsiplay;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -40,6 +41,7 @@ public class MainActivity extends MasterActivity implements AdapterView.OnItemCl
         View.OnCreateContextMenuListener {
     private TextView tVMainHeader;
     private ListView lVMain;
+    private ProgressDialog pd;
     private User user;
     public static ArrayList<Task> tasksList;
     private TaskAdapter taskAdp;
@@ -66,6 +68,8 @@ public class MainActivity extends MasterActivity implements AdapterView.OnItemCl
         lVMain.setAdapter(taskAdp);
         lVMain.setOnItemClickListener(this);
         registerForContextMenu(lVMain);
+        pd=ProgressDialog.show(this,"Connecting Database","Gathering data...",true);
+
 
         activeYear = settings.getInt("activeYear",1970);
         refUsers.child(FBRef.uid).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>(){
@@ -92,6 +96,9 @@ public class MainActivity extends MasterActivity implements AdapterView.OnItemCl
                     }
                 }
                 taskAdp.notifyDataSetChanged();
+                if (pd != null) {
+                    pd.dismiss();
+                }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
