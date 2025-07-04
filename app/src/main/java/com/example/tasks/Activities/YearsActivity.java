@@ -123,7 +123,7 @@ public class YearsActivity extends MasterActivity implements AdapterView.OnItemS
         adb.setTitle("Add new year");
         adb.setMessage("Enter the new year number:\n(when the summer vacation occur)");
         final EditText eT = new EditText(this.getApplicationContext());
-        eT.setInputType(InputType.TYPE_NUMBER_VARIATION_NORMAL);
+        eT.setInputType(InputType.TYPE_CLASS_NUMBER);
         Calendar calNow = Calendar.getInstance();
         eT.setHint(String.valueOf(1+calNow.get(Calendar.YEAR)));
         adb.setView(eT);
@@ -138,7 +138,7 @@ public class YearsActivity extends MasterActivity implements AdapterView.OnItemS
                     dialog.dismiss();
                     if (isNewUser){
                         activeYear = newYear;
-                        addNewClass();
+                        addNewClass(null);
                     }
                 }
             }
@@ -153,13 +153,13 @@ public class YearsActivity extends MasterActivity implements AdapterView.OnItemS
         adb.create().show();
     }
 
-    public void addNewClass() {
+    public void addNewClass(View view) {
         if (activeYear != 1970){
             AlertDialog.Builder adb =new AlertDialog.Builder(YearsActivity.this);
             adb.setTitle("Add new class");
             adb.setMessage("Enter the new class you teach:");
             final EditText eT = new EditText(this.getApplicationContext());
-            eT.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+//            eT.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
             adb.setView(eT);
             adb.setPositiveButton("Ok",new DialogInterface.OnClickListener() {
                 @Override
