@@ -19,6 +19,7 @@ public class Task {
     private String dateStart, dateEnd, className, serNum, dateChecked;
     private int year;
     private boolean fullClass;
+
     /**
      * Default constructor for the Task class.
      * Initializes a new Task object with default values.
@@ -109,7 +110,6 @@ public class Task {
         this.serNum = serNum;
     }
 
-
     /**
      * Gets the year associated with the task.
      * @return The year as an integer.
@@ -117,7 +117,6 @@ public class Task {
     public int getYear() {
         return year;
     }
-
 
     /**
      * Sets the year associated with the task.
@@ -143,7 +142,6 @@ public class Task {
         this.dateChecked = dateChecked;
     }
 
-
     /**
      * Checks if the task pertains to a full class.
      * @return {@code true} if the task is for a full class, {@code false} otherwise.
@@ -151,7 +149,6 @@ public class Task {
     public boolean isFullClass() {
         return fullClass;
     }
-
 
     /**
      * Sets whether the task pertains to a full class.
