@@ -1,0 +1,59 @@
+/**
+ * AddStudents: import flat student list into RT-DB under
+ * /Students/{TeacherUID}/{Year}/{StudentID}
+ */
+function AddStudents() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+
+  // 1. Get Year and Teacher UID from cells B1 and D1
+  var year = sheet.getRange('B1').getDisplayValue().toString();
+  var uid  = sheet.getRange('D1').getDisplayValue().toString();
+
+  // 2. RT-DB base URL and secret (replace with your real secret)
+  var firebaseUrl    = 'https://guysfbfinal-default-rtdb.firebaseio.com';
+  var firebaseSecret = 'AIzaSyC4scqV6ko3sTh1SUTIh4MNorlAiwnS8pg';
+
+  // 3. Read headers (row 3) and data rows (row 4 → last)
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(3, 1, 1, lastCol).getValues()[0];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 4) {
+    Logger.log('⚠️ No student data to import.');
+    return;
+  }
+  var rows = sheet.getRange(4, 1, lastRow - 3, lastCol).getValues();
+
+  // 4. Build student object: { ID: {FirstName:…, LastName:…, …}, … }
+  var students = {};
+  rows.forEach(function(row) {
+    var rec = {};
+    headers.forEach(function(header, i) {
+      if (header) rec[header] = row[i];
+    });
+    var studentId = String(row[0]);
+    students[studentId] = rec;
+  });
+
+  // 5. PUT the block to /Students/{UID}/{Year}.json via REST
+  var path    = '/Students/' + uid + '/' + year + '.json';
+  var url     = firebaseUrl + path + '?auth=' + firebaseSecret;
+  var options = {
+    method      : 'put',
+    contentType : 'application/json',
+    payload     : JSON.stringify(students)
+  };
+
+  var resp = UrlFetchApp.fetch(url, options);
+  Logger.log('✅ Imported ' + Object.keys(students).length + ' students. HTTP ' + resp.getResponseCode());
+}
+
+/**
+ * Adds custom menu to call functions
+ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Students')
+    .addItem('Add Students', 'AddStudents')
+    .addToUi();
+}
