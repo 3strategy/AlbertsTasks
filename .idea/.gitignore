@@ -1,3 +1,12 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+/.idea/AndroidProjectSystem.xml
+/.idea/runConfigurations.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/caches/deviceStreaming.xml
+AndroidProjectSystem.xml
+runConfigurations.xml
+deploymentTargetSelector.xml
+caches/deviceStreaming.xml
+
