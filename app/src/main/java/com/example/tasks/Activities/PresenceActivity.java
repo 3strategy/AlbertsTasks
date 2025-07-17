@@ -72,6 +72,7 @@ public class PresenceActivity extends MasterActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_presence);
 
+
         // Respect system bars (status/nav bar insets)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -95,7 +96,6 @@ public class PresenceActivity extends MasterActivity {
         );
         attendanceList.setAdapter(adapter);
 
-        // Initialize speech service
         speechService = new SpeechToTextService(this,
                 new SpeechToTextService.OnSpeechRecognizedListener() {
                     @Override
@@ -106,15 +106,28 @@ public class PresenceActivity extends MasterActivity {
                     @Override
                     public void onResults(String text) {
                         runOnUiThread(() -> {
+                            // 1. Timestamp + push to UI & RTDB
                             String ts = new SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                                     .format(new Date());
                             String entry = "[" + ts + "] " + text;
-                            // add to UI list
                             adapter.add(entry);
-                            // accumulate in static list
                             rawTranscripts.add(entry);
-                            // push RTDB update immediately
                             pushRawTranscript(entry);
+
+                            // 2. Split into words, normalize, collect
+                            for (String w : text.split("\\s+")) {
+                                String norm = w
+                                        .replaceAll("[^\\p{L}\\p{Nd}]", "")      // strip punctuation
+                                        .toLowerCase(Locale.getDefault());
+                                if (!norm.isEmpty()) {
+                                    collectedWords.add(norm);
+                                }
+                            }
+
+                            // 3. Once we have enough words, try to detect class
+                            if (collectedWords.size() >= 8 && detectedClassName == null) {
+                                detectClass();
+                            }
                         });
                     }
                 }
@@ -365,7 +378,7 @@ public class PresenceActivity extends MasterActivity {
         if (bestCount >= 1 && detectedClassName == null) {
             detectedClassName = bestClass;
             runOnUiThread(() ->
-                    classNameTextView.setText("כיתה: " + detectedClassName)
+                    classNameLabel.setText("כיתה: " + detectedClassName)
             );
         }
     }
