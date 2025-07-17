@@ -10,6 +10,7 @@ import android.speech.SpeechRecognizer;
 public class SpeechToTextService {
     public interface OnSpeechRecognizedListener {
         void onPartialResults(String text);
+
         void onResults(String text);
     }
 
@@ -27,12 +28,29 @@ public class SpeechToTextService {
     private void initRecognizer() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
-            @Override public void onReadyForSpeech(Bundle params) {}
-            @Override public void onBeginningOfSpeech() {}
-            @Override public void onRmsChanged(float rmsdB) {}
-            @Override public void onBufferReceived(byte[] buffer) {}
-            @Override public void onEndOfSpeech() {}
-            @Override public void onError(int error) {}
+            @Override
+            public void onReadyForSpeech(Bundle params) {
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+            }
+
+            @Override
+            public void onRmsChanged(float rmsdB) {
+            }
+
+            @Override
+            public void onBufferReceived(byte[] buffer) {
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+            }
+
+            @Override
+            public void onError(int error) {
+            }
 
             @Override
             public void onPartialResults(Bundle partialResults) {
@@ -52,7 +70,9 @@ public class SpeechToTextService {
                 }
             }
 
-            @Override public void onEvent(int eventType, Bundle params) {}
+            @Override
+            public void onEvent(int eventType, Bundle params) {
+            }
         });
 
         speechIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);

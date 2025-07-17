@@ -94,7 +94,12 @@ public class PresenceActivity extends MasterActivity {
 
                     @Override
                     public void onResults(String text) {
-                        runOnUiThread(() -> adapter.add(text));
+                        runOnUiThread(() -> {
+                            String timestamp = new SimpleDateFormat(
+                                    "HH:mm:ss", Locale.getDefault()
+                            ).format(new Date());
+                            adapter.add(timestamp + " " + text);
+                        });
                     }
                 }
         );
@@ -217,9 +222,9 @@ public class PresenceActivity extends MasterActivity {
     /**
      * TEMPORARY: Determine rounded time and lesson number based on current time.
      * Assumes:
-     *   - L1 starts at 08:30
-     *   - 50-minute slots
-     *   - Round to nearest slot start using ±25 min
+     * - L1 starts at 08:30
+     * - 50-minute slots
+     * - Round to nearest slot start using ±25 min
      *
      * @param now current time
      * @return Pair of ("HHmm" rounded start time string, lesson number), or (-1) if out of range
