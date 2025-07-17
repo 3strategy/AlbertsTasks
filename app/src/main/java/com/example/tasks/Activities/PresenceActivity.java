@@ -2,6 +2,7 @@ package com.example.tasks.Activities;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -79,10 +80,16 @@ public class PresenceActivity extends MasterActivity {
 
         String MMdd = String.format("%02d%02d", now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH));
         String MMM = new SimpleDateFormat("MMM", Locale.ENGLISH).format(now.getTime());
-        String hhmm = new SimpleDateFormat("HHmm", Locale.ENGLISH).format(now.getTime());
 
-        int lesson = calculateLessonSlot(now); // slot detection
-        String timestampAndLesson = MMdd + MMM + "_" + hhmm + "L" + lesson;
+        Pair<String, Integer> lessonInfo = getRoundedTimeAndLessonSlot(Calendar.getInstance());
+        String roundedHHmm = lessonInfo.first;
+        int lesson = lessonInfo.second;
+
+        if (lesson == -1) {
+            Log.e("PresenceActivity", "Time not in valid school hours");
+            return;
+        }
+        String timestampAndLesson = MMdd + MMM + "_" + roundedHHmm + "L" + lesson;
 
         // 🔄 Data payload
         Map<String, Object> payload = new HashMap<>();
@@ -146,25 +153,37 @@ public class PresenceActivity extends MasterActivity {
      * - First with school-specific if-clauses
      * - Then later with profile info from teacher's settings
      */
-    public static int calculateLessonSlot(Calendar now) {
-        int hour = now.get(Calendar.HOUR_OF_DAY);
-        int minute = now.get(Calendar.MINUTE);
+    /**
+     * TEMPORARY: Determine rounded time and lesson number based on current time.
+     * Assumes:
+     *   - L1 starts at 08:30
+     *   - 50-minute slots
+     *   - Round to nearest slot start using ±25 min
+     *
+     * @param now current time
+     * @return Pair of ("HHmm" rounded start time string, lesson number), or (-1) if out of range
+     */
+    public static Pair<String, Integer> getRoundedTimeAndLessonSlot(Calendar now) {
+        int totalMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
 
-        // Total minutes since midnight
-        int totalMinutes = hour * 60 + minute;
+        int baseStart = 8 * 60 + 30; // 08:30 in minutes
+        int maxLessons = 14;
+        int lessonDuration = 50;
 
-        // Lesson 1 starts at 08:30 → 510 minutes
-        int baseStartMinutes = 8 * 60 + 30;  // 510
+        int minValid = baseStart - 25;
+        int maxValid = baseStart + lessonDuration * (maxLessons - 1) + 25;
 
-        // Tolerance: if the time is outside school hours
-        if (totalMinutes < baseStartMinutes - 25 || totalMinutes > baseStartMinutes + 50 * 13 + 25)
-            return -1;  // not within valid school lesson range
+        if (totalMinutes < minValid || totalMinutes > maxValid) {
+            return new Pair<>(null, -1);  // outside school time
+        }
 
-        // Calculate lesson index (rounded)
-        int offset = totalMinutes - baseStartMinutes;
-        int lessonIndex = Math.round(offset / 50.0f);  // rounding includes ±25m behavior
+        int roundedIndex = Math.round((totalMinutes - baseStart) / (float) lessonDuration);
+        int lessonStartMinutes = baseStart + roundedIndex * lessonDuration;
 
-        return lessonIndex + 1;  // L1 = index 0 → lesson #1
+        int hour = lessonStartMinutes / 60;
+        int minute = lessonStartMinutes % 60;
+        String roundedHHmm = String.format("%02d%02d", hour, minute);
+
+        return new Pair<>(roundedHHmm, roundedIndex + 1);
     }
-
 }
