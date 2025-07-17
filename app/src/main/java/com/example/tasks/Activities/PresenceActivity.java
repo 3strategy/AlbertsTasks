@@ -18,6 +18,7 @@ import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -33,6 +34,7 @@ import static com.example.tasks.FBRef.refPresenceRoot;
 
 public class PresenceActivity extends MasterActivity {
 
+    private final List<String> rawTranscripts = new ArrayList<>();
 
     private TextView classNameLabel, missingStudentsLabel, detectedNamesLabel;
     private ListView attendanceList;
@@ -96,6 +98,7 @@ public class PresenceActivity extends MasterActivity {
         payload.put("class", "יוד571");
         payload.put("detected", mockDetectedNames);
         payload.put("missing", mockMissingNames);
+        payload.put("rawTranscript", rawTranscripts);
         payload.put("timestamp", System.currentTimeMillis());
 
         // 🪄 Write using the clean FBRef
@@ -110,6 +113,13 @@ public class PresenceActivity extends MasterActivity {
     private void populateMockData() {
         // Set class name
         classNameLabel.setText("כיתה: יוד571");
+
+        // set raw data too:
+        rawTranscripts.clear();
+        rawTranscripts.add("Alice is present");
+        rawTranscripts.add("Bob is also here");
+        rawTranscripts.add("I think Charlie said something funny");
+
 
         // Set detected names
         StringBuilder detected = new StringBuilder("Recorded Names:");
