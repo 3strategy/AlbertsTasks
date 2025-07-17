@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.example.tasks.FBRef;
 import com.example.tasks.Obj.User;
 import com.example.tasks.R;
+import com.example.tasks.models.Student;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -33,8 +34,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * @author		Albert Levy albert.school2015@gmail.com
@@ -127,8 +130,9 @@ public class LoginActivity extends AppCompatActivity {
         if (refAuth.getCurrentUser()!=null && isChecked) {
             FBRef.getUser(refAuth.getCurrentUser());
             stayConnect=true;
-            si.putExtra("isNewUser",false);
-            startActivity(si);
+            si.putExtra("isNewUser", false);
+            // only go to PresenceActivity once students are loaded
+            FBRef.loadAllStudents(() -> startActivity(si));
         }
     }
 
@@ -228,8 +232,9 @@ public class LoginActivity extends AppCompatActivity {
                                     SharedPreferences.Editor editor=settings.edit();
                                     editor.putBoolean("stayConnect",cBstayconnect.isChecked());
                                     editor.commit();
-                                    Intent si = new Intent(LoginActivity.this,PresenceActivity.class);
-                                    startActivity(si);
+                                    final Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
+                                    // delay navigation until students are ready
+                                    FBRef.loadAllStudents(() -> startActivity(si));
                                 }
                             } else {
                                 Log.d("PresenceActivity", "signinUserWithEmail:fail");
@@ -346,10 +351,12 @@ public class LoginActivity extends AppCompatActivity {
                     editor.putInt("activeYear",activeYear);
                     editor.putBoolean("stayConnect",cBstayconnect.isChecked());
                     editor.commit();
-                    Intent si = new Intent(LoginActivity.this,PresenceActivity.class);
-                    startActivity(si);
+                    final Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
+                    // delay navigation until students are ready
+                    FBRef.loadAllStudents(() -> startActivity(si));
                 }
             }
         }
     }
+
 }

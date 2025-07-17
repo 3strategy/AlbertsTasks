@@ -1,16 +1,26 @@
 package com.example.tasks;
 
+import com.example.tasks.models.Student;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
+import java.util.ArrayList;
+import java.util.List;
+import android.util.Log;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.example.tasks.models.Student;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 // author: Guy Siedes 3strategy@gmail.com
 // with GPT o4 mini high, private chat  :  https://chatgpt.com/c/6878cad2-5d50-800e-8499-6db3a8fb9d88
 // usage guideline: https://מבני.שלי.com/android/projectSteps/newFBref
 public class FBRef {
+    public static List<Student> allStudents = new ArrayList<>();
 
     // ─── auth & root DB ───────────────────────────────────────────────
     public static FirebaseAuth       refAuth     = FirebaseAuth.getInstance();
@@ -70,6 +80,23 @@ public class FBRef {
     }
 
 
+    public static void loadAllStudents(final Runnable onComplete) {
+        allStudents.clear();
+        refStudentsYear.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    allStudents.add(child.getValue(Student.class));
+                }
+                if (onComplete != null) onComplete.run();
+            }
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e("FBRef", "Failed to load students", error.toException());
+                if (onComplete != null) onComplete.run();
+            }
+        });
+    }
     /**
      * Convenience overload: do both in one call.
      */
