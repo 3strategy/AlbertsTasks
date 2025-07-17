@@ -24,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 import com.example.tasks.SpeechToTextService;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ServerValue;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -95,10 +97,15 @@ public class PresenceActivity extends MasterActivity {
                     @Override
                     public void onResults(String text) {
                         runOnUiThread(() -> {
-                            String timestamp = new SimpleDateFormat(
-                                    "HH:mm:ss", Locale.getDefault()
-                            ).format(new Date());
-                            adapter.add(timestamp + " " + text);
+                            String ts = new SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                                    .format(new Date());
+                            String entry = "[" + ts + "] " + text;
+                            // add to UI list
+                            adapter.add(entry);
+                            // accumulate in static list
+                            rawTranscripts.add(entry);
+                            // push RTDB update immediately
+                            pushRawTranscript(entry);
                         });
                     }
                 }
@@ -233,7 +240,7 @@ public class PresenceActivity extends MasterActivity {
         int totalMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
 
         int baseStart = 8 * 60 + 30; // 08:30 in minutes
-        int maxLessons = 14;
+        int maxLessons = 20;
         int lessonDuration = 50;
 
         int minValid = baseStart - 25;
@@ -269,6 +276,49 @@ public class PresenceActivity extends MasterActivity {
                         Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    /**
+     * 🔄 Pushes a single transcript entry to RTDB using rounded-time + lesson key
+     */
+    private void pushRawTranscript(String newEntry) {
+        // 🗓 Get current time
+        Calendar now = Calendar.getInstance();
+
+        // 🔢 Build key parts
+        int week = now.get(Calendar.WEEK_OF_YEAR);
+        String weekStr = "W" + week;
+
+        String MMdd = String.format(Locale.getDefault(), "%02d%02d",
+                now.get(Calendar.MONTH) + 1,
+                now.get(Calendar.DAY_OF_MONTH)
+        );
+        String MMM = new SimpleDateFormat("MMM", Locale.ENGLISH)
+                .format(now.getTime());
+
+        Pair<String, Integer> lessonInfo = getRoundedTimeAndLessonSlot(now);
+        String roundedHHmm = lessonInfo.first;
+        int lesson = lessonInfo.second;
+        if (lesson == -1) {
+            Log.e("PresenceActivity", "Time not in valid school hours");
+            return;
+        }
+        String timestampAndLesson = MMdd + MMM + "_" + roundedHHmm + "L" + lesson;
+
+        // 🔄 Data payload
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("class", "N/A_Class");
+        payload.put("detected", rawTranscripts);
+        payload.put("missing", new ArrayList<>());
+        payload.put("rawTranscript", rawTranscripts);
+        payload.put("timestamp", System.currentTimeMillis());
+
+        // 🪄 Write using the clean FBRef
+        refPresUidCurrentWeek
+                .child(timestampAndLesson)
+                .setValue(payload)
+                .addOnSuccessListener(unused -> Log.i("PresenceActivity", "Upload success"))
+                .addOnFailureListener(e -> Log.e("PresenceActivity", "Upload failed", e));
     }
 
 }
