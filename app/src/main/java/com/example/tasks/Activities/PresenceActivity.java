@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 import com.example.tasks.SpeechToTextService;
+import com.example.tasks.models.Student;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ServerValue;
 
@@ -33,16 +34,24 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
+import static com.example.tasks.FBRef.allStudents;
 import static com.example.tasks.FBRef.refPresUidCurrentWeek;
 import static com.example.tasks.FBRef.refPresenceRoot;
 //import static com.example.tasks.FBRef.refPresenceYear;
 
 
 public class PresenceActivity extends MasterActivity {
+
+    //private List<Student> allStudents;              // loaded from RTDB
+    private Set<String> collectedWords = new HashSet<>();
+    private String detectedClassName = null;
+    private TextView classNameTextView;
     private SpeechToTextService speechService;
     private final List<String> rawTranscripts = new ArrayList<>();
 
@@ -319,6 +328,46 @@ public class PresenceActivity extends MasterActivity {
                 .setValue(payload)
                 .addOnSuccessListener(unused -> Log.i("PresenceActivity", "Upload success"))
                 .addOnFailureListener(e -> Log.e("PresenceActivity", "Upload failed", e));
+    }
+
+
+    private void detectClass() {
+        // 1. Build map of ClassName → count
+        Map<String, Integer> classMatches = new HashMap<>();
+        for (Student s : allStudents) {
+            classMatches.putIfAbsent(s.getClassName(), 0);
+        }
+
+        // 2. For each class, count how many nicknames appear
+        for (String cls : new ArrayList<>(classMatches.keySet())) {
+            int count = 0;
+            for (Student s : allStudents) {
+                if (!s.getClassName().equals(cls)) continue;
+                String nick = s.getNickName().toLowerCase(Locale.ROOT);
+                if (collectedWords.contains(nick)) {
+                    count++;
+                }
+            }
+            classMatches.put(cls, count);
+        }
+
+        // 3. Find best match
+        String bestClass = null;
+        int bestCount = 0;
+        for (Map.Entry<String, Integer> e : classMatches.entrySet()) {
+            if (e.getValue() > bestCount) {
+                bestCount = e.getValue();
+                bestClass = e.getKey();
+            }
+        }
+
+        // 4. If we have at least one hit, update UI once
+        if (bestCount >= 1 && detectedClassName == null) {
+            detectedClassName = bestClass;
+            runOnUiThread(() ->
+                    classNameTextView.setText("כיתה: " + detectedClassName)
+            );
+        }
     }
 
 }
