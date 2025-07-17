@@ -45,7 +45,7 @@ public class PresenceActivity extends MasterActivity {
     private final List<String> rawTranscripts = new ArrayList<>();
 
     private TextView transcriptTextView;
-    private TextView classNameLabel, missingStudentsLabel,detectedNamesLabel;
+    private TextView classNameLabel, missingStudentsLabel;
     private ListView attendanceList;
     private Button btnStart, btnStop, btnDebug;
     private static final int REQUEST_RECORD_AUDIO = 1001;
@@ -71,7 +71,7 @@ public class PresenceActivity extends MasterActivity {
         // 🔗 Bind views
         classNameLabel = findViewById(R.id.classNameLabel);
         missingStudentsLabel = findViewById(R.id.missingStudentsLabel);
-        detectedNamesLabel = findViewById(R.id.detectedNamesLabel);
+
         attendanceList = findViewById(R.id.attendanceList);
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
@@ -162,7 +162,6 @@ public class PresenceActivity extends MasterActivity {
         for (String name : mockDetectedNames) {
             detected.append("\n• ").append(name);
         }
-        detectedNamesLabel.setText(detected.toString());
 
         // Set missing students
         StringBuilder missing = new StringBuilder("לא דווחו:");
