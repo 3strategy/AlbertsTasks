@@ -81,7 +81,7 @@ public class PresenceActivity extends MasterActivity {
         String MMM = new SimpleDateFormat("MMM", Locale.ENGLISH).format(now.getTime());
         String hhmm = new SimpleDateFormat("HHmm", Locale.ENGLISH).format(now.getTime());
 
-        int lesson = 3; // 📌 placeholder for now, replace later with slot-detection
+        int lesson = calculateLessonSlot(now); // slot detection
         String timestampAndLesson = MMdd + MMM + "_" + hhmm + "L" + lesson;
 
         // 🔄 Data payload
@@ -134,4 +134,37 @@ public class PresenceActivity extends MasterActivity {
         // 🔜 Next: send this data to Firebase RTDB
         uploadMockDataToFirebase();
     }
+
+    /**
+     * TEMPORARY: Heuristic to calculate lesson number (L#) from current time.
+     * Assumes:
+     * - First lesson starts at 08:30
+     * - Each lesson is 50 minutes
+     * - Round to the nearest lesson slot using ±25 min tolerance
+     * <p>
+     * NOTE: This logic will be replaced:
+     * - First with school-specific if-clauses
+     * - Then later with profile info from teacher's settings
+     */
+    public static int calculateLessonSlot(Calendar now) {
+        int hour = now.get(Calendar.HOUR_OF_DAY);
+        int minute = now.get(Calendar.MINUTE);
+
+        // Total minutes since midnight
+        int totalMinutes = hour * 60 + minute;
+
+        // Lesson 1 starts at 08:30 → 510 minutes
+        int baseStartMinutes = 8 * 60 + 30;  // 510
+
+        // Tolerance: if the time is outside school hours
+        if (totalMinutes < baseStartMinutes - 25 || totalMinutes > baseStartMinutes + 50 * 13 + 25)
+            return -1;  // not within valid school lesson range
+
+        // Calculate lesson index (rounded)
+        int offset = totalMinutes - baseStartMinutes;
+        int lessonIndex = Math.round(offset / 50.0f);  // rounding includes ±25m behavior
+
+        return lessonIndex + 1;  // L1 = index 0 → lesson #1
+    }
+
 }
