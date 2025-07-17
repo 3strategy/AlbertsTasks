@@ -8,9 +8,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 
-public class PresenceActivity extends AppCompatActivity {
+public class PresenceActivity extends MasterActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

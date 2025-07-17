@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Boolean isChecked=settings.getBoolean("stayConnect",false);
-        Intent si = new Intent(LoginActivity.this,MainActivity.class);
+        Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
         if (refAuth.getCurrentUser()!=null && isChecked) {
             FBRef.getUser(refAuth.getCurrentUser());
             stayConnect=true;
@@ -218,7 +218,7 @@ public class LoginActivity extends AppCompatActivity {
                             pd.dismiss();
                             if (task.isSuccessful()) {
                                 FBRef.getUser(refAuth.getCurrentUser());
-                                Log.d("MainActivity", "signinUserWithEmail:success");
+                                Log.d("PresenceActivity", "signinUserWithEmail:success");
                                 Toast.makeText(LoginActivity.this, "Login Success", Toast.LENGTH_SHORT).show();
                                 settings = getSharedPreferences("PREFS_NAME",MODE_PRIVATE);
                                 activeYear = settings.getInt("activeYear",1970);
@@ -228,11 +228,11 @@ public class LoginActivity extends AppCompatActivity {
                                     SharedPreferences.Editor editor=settings.edit();
                                     editor.putBoolean("stayConnect",cBstayconnect.isChecked());
                                     editor.commit();
-                                    Intent si = new Intent(LoginActivity.this,MainActivity.class);
+                                    Intent si = new Intent(LoginActivity.this,PresenceActivity.class);
                                     startActivity(si);
                                 }
                             } else {
-                                Log.d("MainActivity", "signinUserWithEmail:fail");
+                                Log.d("PresenceActivity", "signinUserWithEmail:fail");
                                 Toast.makeText(LoginActivity.this, "e-mail or password are wrong!", Toast.LENGTH_LONG).show();
                             }
                         }
@@ -251,7 +251,7 @@ public class LoginActivity extends AppCompatActivity {
                             if (task.isSuccessful()) {
                                 FirebaseUser user = refAuth.getCurrentUser();
                                 FBRef.getUser(user);
-                                Log.d("MainActivity", "createUserWithEmail:success");
+                                Log.d("PresenceActivity", "createUserWithEmail:success");
                                 uid = user.getUid();
                                 userdb=new User(uid,name);
                                 refUsers.child(uid).setValue(userdb);
@@ -261,7 +261,7 @@ public class LoginActivity extends AppCompatActivity {
                                 if (task.getException() instanceof FirebaseAuthUserCollisionException)
                                     Toast.makeText(LoginActivity.this, "User with e-mail already exist!", Toast.LENGTH_SHORT).show();
                                 else {
-                                    Log.w("MainActivity", "createUserWithEmail:failure", task.getException());
+                                    Log.w("PresenceActivity", "createUserWithEmail:failure", task.getException());
                                     Toast.makeText(LoginActivity.this, "User create failed.",Toast.LENGTH_LONG).show();
                                 }
                             }
@@ -275,7 +275,7 @@ public class LoginActivity extends AppCompatActivity {
      * This method is called if a logged-in user's active year is not found in local SharedPreferences.
      * <p>
      * It queries the "Years" node in Firebase for the latest entry.
-     * If an active year is found, it's saved to SharedPreferences, and the user is navigated to {@link MainActivity}.
+     * If an active year is found, it's saved to SharedPreferences, and the user is navigated to {@link PresenceActivity}.
      * If no active year is found (e.g., for a user who previously registered but didn't set an active year),
      * it calls {@link #setActiveYear()} to prompt the user to choose one.
      * @deprecated This method seems to fetch a global last year, not user-specific.
@@ -299,7 +299,7 @@ public class LoginActivity extends AppCompatActivity {
                         editor.putInt("activeYear",activeYear);
                         editor.putBoolean("stayConnect",cBstayconnect.isChecked());
                         editor.commit();
-                        Intent si = new Intent(LoginActivity.this,MainActivity.class);
+                        Intent si = new Intent(LoginActivity.this,PresenceActivity.class);
                         startActivity(si);
                     }
                 }
@@ -325,7 +325,7 @@ public class LoginActivity extends AppCompatActivity {
      * <p>
      * This method handles the result from {@link YearsActivity}. If the result is {@code Activity.RESULT_OK}
      * and a valid active year is returned, it saves this year to SharedPreferences,
-     * updates the "stay connected" preference, and navigates to {@link MainActivity}.
+     * updates the "stay connected" preference, and navigates to {@link PresenceActivity}.
      *
      * @param requestCode The integer request code originally supplied to
      *                    startActivityForResult(), allowing you to identify who this
@@ -346,7 +346,7 @@ public class LoginActivity extends AppCompatActivity {
                     editor.putInt("activeYear",activeYear);
                     editor.putBoolean("stayConnect",cBstayconnect.isChecked());
                     editor.commit();
-                    Intent si = new Intent(LoginActivity.this,MainActivity.class);
+                    Intent si = new Intent(LoginActivity.this,PresenceActivity.class);
                     startActivity(si);
                 }
             }

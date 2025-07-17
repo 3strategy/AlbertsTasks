@@ -8,9 +8,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends MasterActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
