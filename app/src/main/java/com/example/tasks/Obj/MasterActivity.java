@@ -7,6 +7,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import static com.example.tasks.FBRef.*; // Avoid wildcard imports if specific members are known.
+
 import android.app.ActivityManager;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,17 +17,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.tasks.Activities.DoneTasksActivity;
+import com.example.tasks.Activities.MaakavActivity;
 import com.example.tasks.Activities.MainActivity;
+import com.example.tasks.Activities.PresenceActivity;
+import com.example.tasks.Activities.ProfileActivity;
+import com.example.tasks.Activities.ReportsActivity;
 import com.example.tasks.Activities.YearsActivity;
 import com.example.tasks.R;
 
 import java.util.List;
 
 /**
- * @author		Albert Levy albert.school2015@gmail.com
- * @version     2.1
- * @since		9/3/2024
- * <p>
+ * @author Albert Levy albert.school2015@gmail.com
+ * @version 2.1
+ * @since 9/3/2024 <p>
  * MasterActivity serves as a base class for activities within the application,
  * providing common functionality such as an options menu for navigation,
  * account disconnection, and application exit.
@@ -64,11 +68,11 @@ public class MasterActivity extends AppCompatActivity {
      *
      * @param menu The options menu in which you place your items.
      * @return You must return true for the menu to be displayed;
-     *         if you return false it will not be shown.
+     * if you return false it will not be shown.
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main,menu);
+        getMenuInflater().inflate(R.menu.main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -94,44 +98,66 @@ public class MasterActivity extends AppCompatActivity {
      *
      * @param item The menu item that was selected.
      * @return boolean Return false to allow normal menu processing to
-     *         proceed, true to consume it here.
+     * proceed, true to consume it here.
      */
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        ActivityManager am = (ActivityManager) this .getSystemService(ACTIVITY_SERVICE);
+        ActivityManager am = (ActivityManager) this.getSystemService(ACTIVITY_SERVICE);
         List<ActivityManager.RunningTaskInfo> taskInfo = am.getRunningTasks(1);
         String Actvity_Name = taskInfo.get(0).topActivity.getClassName(); // Be cautious with getRunningTasks, it's deprecated for third-party apps.
         int itemId = item.getItemId();
         if (itemId == R.id.idMain) {
             if (!Actvity_Name.equals("com.example.tasks.Activities.MainActivity")) {
-                Log.i("MasterActivity","Changing to MainActivity");
+                Log.i("MasterActivity", "Changing to MainActivity");
                 Intent intent = new Intent(this.getApplicationContext(), MainActivity.class);
                 startActivity(intent);
             }
         } else if (itemId == R.id.idTasksDone) {
             if (!Actvity_Name.equals("com.example.tasks.Activities.DoneTasksActivity")) {
-                Log.i("MasterActivity","Changing to DoneTasksActivity");
+                Log.i("MasterActivity", "Changing to DoneTasksActivity");
                 Intent intent = new Intent(this.getApplicationContext(), DoneTasksActivity.class);
                 startActivity(intent);
             }
         } else if (itemId == R.id.idYears) {
             if (!Actvity_Name.equals("com.example.tasks.Activities.YearsActivity")) {
-                Log.i("MasterActivity","Changing to YearsActivity");
+                Log.i("MasterActivity", "Changing to YearsActivity");
                 Intent intent = new Intent(this.getApplicationContext(), YearsActivity.class);
                 startActivity(intent);
             }
+        // הוסיפו כאן את ה-if הנוספים עבור כל Activity שיצרתם:
+        // לדוגמה:
+        } else if (itemId == R.id.idReports) {
+            if (!Actvity_Name.equals("com.example.tasks.Activities.ReportsActivity")) {
+                Log.i("MasterActivity", "Changing to ReportsActivity");
+                startActivity(new Intent(this, ReportsActivity.class));
+            }
+        } else if (itemId == R.id.idProfile) {
+            if (!Actvity_Name.equals("com.example.tasks.Activities.ProfileActivity")) {
+                Log.i("MasterActivity", "Changing to ProfileActivity");
+                startActivity(new Intent(this, ProfileActivity.class));
+            }
+        } else if (itemId == R.id.idPresence) {
+            if (!Actvity_Name.equals("com.example.tasks.Activities.PresenceActivity")) {
+                Log.i("MasterActivity", "Changing to PresenceActivity");
+                startActivity(new Intent(this, PresenceActivity.class));
+            }
+        } else if (itemId == R.id.idMaakav) {
+            if (!Actvity_Name.equals("com.example.tasks.Activities.MaakavActivity")) {
+                Log.i("MasterActivity", "Changing to MaakavActivity");
+                startActivity(new Intent(this, MaakavActivity.class));
+            }
         } else if (itemId == R.id.idDisconnect) {
-            AlertDialog.Builder adb =new AlertDialog.Builder(this);
+            AlertDialog.Builder adb = new AlertDialog.Builder(this);
             adb.setTitle("Disconnect Account");
             adb.setMessage("Are you sure yo want to\n Disconnect account & Exit?"); // Typo: "you"
-            adb.setPositiveButton("Ok",new DialogInterface.OnClickListener() {
+            adb.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     refAuth.signOut(); // Ensure refAuth is initialized and accessible
                     finishAffinity(); // Closes all activities in this task
                 }
             });
-            adb.setNeutralButton("Cancel",new DialogInterface.OnClickListener() {
+            adb.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.cancel();
@@ -140,16 +166,16 @@ public class MasterActivity extends AppCompatActivity {
             adb.setCancelable(false);
             adb.create().show();
         } else if (itemId == R.id.idExit) {
-            AlertDialog.Builder adb =new AlertDialog.Builder(this);
+            AlertDialog.Builder adb = new AlertDialog.Builder(this);
             adb.setTitle("Quit Application");
             adb.setMessage("Are you sure?");
-            adb.setPositiveButton("Ok",new DialogInterface.OnClickListener() {
+            adb.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     finishAffinity(); // Closes all activities in this task
                 }
             });
-            adb.setNeutralButton("Cancel",new DialogInterface.OnClickListener() {
+            adb.setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     dialog.cancel();

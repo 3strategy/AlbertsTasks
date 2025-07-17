@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
+    <item
+        android:id="@+id/idPresence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Presence" />
+    <item
+        android:id="@+id/idReports"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Reports" />
+    <item
+        android:id="@+id/idProfile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Profile" />
+    <item
+        android:id="@+id/idMaakav"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="Maakav" />
+    <item
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
     <item
         android:id="@+id/idMain"
         android:layout_width="wrap_content"
