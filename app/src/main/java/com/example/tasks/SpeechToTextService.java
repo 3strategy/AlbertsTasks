@@ -9,7 +9,8 @@ import android.speech.SpeechRecognizer;
 
 public class SpeechToTextService {
     public interface OnSpeechRecognizedListener {
-        void onSpeechRecognized(String text);
+        void onPartialResults(String text);
+        void onResults(String text);
     }
 
     private SpeechRecognizer speechRecognizer;
@@ -32,24 +33,25 @@ public class SpeechToTextService {
             @Override public void onBufferReceived(byte[] buffer) {}
             @Override public void onEndOfSpeech() {}
             @Override public void onError(int error) {}
-            @Override public void onResults(Bundle results) {
-                if (results != null) {
-                    java.util.ArrayList<String> matches =
-                            results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    if (matches != null && !matches.isEmpty()) {
-                        listener.onSpeechRecognized(matches.get(0));
-                    }
+
+            @Override
+            public void onPartialResults(Bundle partialResults) {
+                java.util.ArrayList<String> matches =
+                        partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (matches != null && !matches.isEmpty()) {
+                    listener.onPartialResults(matches.get(0));
                 }
             }
-            @Override public void onPartialResults(Bundle partialResults) {
-                if (partialResults != null) {
-                    java.util.ArrayList<String> matches =
-                            partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    if (matches != null && !matches.isEmpty()) {
-                        listener.onSpeechRecognized(matches.get(0));
-                    }
+
+            @Override
+            public void onResults(Bundle results) {
+                java.util.ArrayList<String> matches =
+                        results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (matches != null && !matches.isEmpty()) {
+                    listener.onResults(matches.get(0));
                 }
             }
+
             @Override public void onEvent(int eventType, Bundle params) {}
         });
 

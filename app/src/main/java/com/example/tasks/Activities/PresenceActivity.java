@@ -49,7 +49,7 @@ public class PresenceActivity extends MasterActivity {
     private ListView attendanceList;
     private Button btnStart, btnStop, btnDebug;
     private static final int REQUEST_RECORD_AUDIO = 1001;
-
+    private ArrayAdapter<String> adapter;
     private final List<String> mockDetectedNames = Arrays.asList("Alice", "Bob", "Charlie");
     private final List<String> mockMissingNames = Arrays.asList("David", "Eve");
 
@@ -68,19 +68,35 @@ public class PresenceActivity extends MasterActivity {
             return insets;
         });
 
-        // 🔗 Bind views
         classNameLabel = findViewById(R.id.classNameLabel);
         missingStudentsLabel = findViewById(R.id.missingStudentsLabel);
-
+        transcriptTextView = findViewById(R.id.transcriptTextView);
         attendanceList = findViewById(R.id.attendanceList);
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
         btnDebug = findViewById(R.id.btnDebug);
-        transcriptTextView = findViewById(R.id.transcriptTextView);
+
+        // Prepare list adapter for final results
+        adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1,
+                new java.util.ArrayList<>()
+        );
+        attendanceList.setAdapter(adapter);
 
         // Initialize speech service
-        speechService = new SpeechToTextService(this, text ->
-                runOnUiThread(() -> transcriptTextView.setText(text))
+        speechService = new SpeechToTextService(this,
+                new SpeechToTextService.OnSpeechRecognizedListener() {
+                    @Override
+                    public void onPartialResults(String text) {
+                        runOnUiThread(() -> transcriptTextView.setText(text));
+                    }
+
+                    @Override
+                    public void onResults(String text) {
+                        runOnUiThread(() -> adapter.add(text));
+                    }
+                }
         );
 
         // 🧪 Hook debug button
@@ -95,6 +111,7 @@ public class PresenceActivity extends MasterActivity {
                         new String[]{Manifest.permission.RECORD_AUDIO},
                         REQUEST_RECORD_AUDIO);
             } else {
+                transcriptTextView.setText(""); // clear on new session
                 speechService.startRecognition();
                 btnStop.setEnabled(true);
             }
@@ -106,7 +123,6 @@ public class PresenceActivity extends MasterActivity {
             btnStop.setEnabled(false);
         });
     }
-
 
     private void uploadMockDataToFirebase() {
         // 🗓 Get current time
