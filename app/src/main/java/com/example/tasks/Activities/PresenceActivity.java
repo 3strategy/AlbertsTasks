@@ -1,5 +1,7 @@
 package com.example.tasks.Activities;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
@@ -7,15 +9,21 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.graphics.Insets;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
+import com.example.tasks.SpeechToTextService;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -33,12 +41,14 @@ import static com.example.tasks.FBRef.refPresenceRoot;
 
 
 public class PresenceActivity extends MasterActivity {
-
+    private SpeechToTextService speechService;
     private final List<String> rawTranscripts = new ArrayList<>();
 
-    private TextView classNameLabel, missingStudentsLabel, detectedNamesLabel;
+    private TextView transcriptTextView;
+    private TextView classNameLabel, missingStudentsLabel,detectedNamesLabel;
     private ListView attendanceList;
     private Button btnStart, btnStop, btnDebug;
+    private static final int REQUEST_RECORD_AUDIO = 1001;
 
     private final List<String> mockDetectedNames = Arrays.asList("Alice", "Bob", "Charlie");
     private final List<String> mockMissingNames = Arrays.asList("David", "Eve");
@@ -66,9 +76,35 @@ public class PresenceActivity extends MasterActivity {
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
         btnDebug = findViewById(R.id.btnDebug);
+        transcriptTextView = findViewById(R.id.transcriptTextView);
+
+        // Initialize speech service
+        speechService = new SpeechToTextService(this, text ->
+                runOnUiThread(() -> transcriptTextView.setText(text))
+        );
 
         // 🧪 Hook debug button
         btnDebug.setOnClickListener(v -> populateMockData());
+
+        // 🔊 Start recognition
+        btnStart.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        REQUEST_RECORD_AUDIO);
+            } else {
+                speechService.startRecognition();
+                btnStop.setEnabled(true);
+            }
+        });
+
+        // 🔇 Stop recognition
+        btnStop.setOnClickListener(v -> {
+            speechService.stopRecognition();
+            btnStop.setEnabled(false);
+        });
     }
 
 
@@ -196,4 +232,23 @@ public class PresenceActivity extends MasterActivity {
 
         return new Pair<>(roundedHHmm, roundedIndex + 1);
     }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_RECORD_AUDIO) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                speechService.startRecognition();
+            } else {
+                Toast.makeText(this,
+                        "Microphone permission is required",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 }
