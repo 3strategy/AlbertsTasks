@@ -3,6 +3,7 @@ package com.example.tasks.Activities;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.ArrayAdapter;
@@ -125,9 +126,38 @@ public class PresenceActivity extends MasterActivity {
                             }
 
                             // 3. Once we have enough words, try to detect class
-                            if (collectedWords.size() >= 8 && detectedClassName == null) {
-                                detectClass();
+
+
+                            if (detectedClassName == null && collectedWords.size() >= 8) {
+                                detectClass(); //String cls = // אבל אם יש זמן - לפחות שיחזיר true/false
+                                if (true) {
+                                    //detectedClassName = cls;
+                                    classNameLabel.setText("כיתה: " + detectedClassName);
+
+                                    // build list of this class’s nicknames
+                                    List<String> classNicks = new ArrayList<>();
+                                    for (Student s : allStudents) {
+                                        if (detectedClassName.equals(s.getClassName())) {
+                                            classNicks.add(s.getNickName());
+                                        }
+                                    }
+
+                                    // filter out the ones we heard
+                                    List<String> missing = new ArrayList<>();
+                                    for (String nick : classNicks) {
+                                        if (!collectedWords.contains(nick.toLowerCase(Locale.getDefault()))) {
+                                            missing.add(nick);
+                                        }
+                                    }
+
+                                    // populate your red TextView
+                                    String missingText = missing.isEmpty()
+                                            ? "לא דווחו: כל התלמידים"
+                                            : "לא דווחו: " + TextUtils.join(", ", missing);
+                                    missingStudentsLabel.setText(missingText);
+                                }
                             }
+                            pushRawTranscript(entry);
                         });
                     }
                 }
@@ -329,7 +359,7 @@ public class PresenceActivity extends MasterActivity {
 
         // 🔄 Data payload
         Map<String, Object> payload = new HashMap<>();
-        payload.put("class", "N/A_Class");
+        payload.put("class", detectedClassName);
         payload.put("detected", rawTranscripts);
         payload.put("missing", new ArrayList<>());
         payload.put("rawTranscript", rawTranscripts);
