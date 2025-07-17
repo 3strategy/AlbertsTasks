@@ -18,9 +18,17 @@ import com.example.tasks.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import static com.example.tasks.FBRef.refPresUidCurrentWeek;
+import static com.example.tasks.FBRef.refPresenceRoot;
+//import static com.example.tasks.FBRef.refPresenceYear;
+
 
 public class PresenceActivity extends MasterActivity {
 
@@ -61,6 +69,37 @@ public class PresenceActivity extends MasterActivity {
     }
 
 
+    private void uploadMockDataToFirebase() {
+        // 🗓 Get current time
+        Calendar now = Calendar.getInstance();
+
+        // 🔢 Build key parts
+        int week = now.get(Calendar.WEEK_OF_YEAR);
+        String weekStr = "W" + week;
+
+        String MMdd = String.format("%02d%02d", now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH));
+        String MMM = new SimpleDateFormat("MMM", Locale.ENGLISH).format(now.getTime());
+        String hhmm = new SimpleDateFormat("HHmm", Locale.ENGLISH).format(now.getTime());
+
+        int lesson = 3; // 📌 placeholder for now, replace later with slot-detection
+        String timestampAndLesson = MMdd + MMM + "_" + hhmm + "L" + lesson;
+
+        // 🔄 Data payload
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("class", "יוד571");
+        payload.put("detected", mockDetectedNames);
+        payload.put("missing", mockMissingNames);
+        payload.put("timestamp", System.currentTimeMillis());
+
+        // 🪄 Write using the clean FBRef
+        refPresUidCurrentWeek
+                .child(timestampAndLesson)
+                .setValue(payload)
+                .addOnSuccessListener(unused -> Log.i("PresenceActivity", "Upload success"))
+                .addOnFailureListener(e -> Log.e("PresenceActivity", "Upload failed", e));
+    }
+
+
     private void populateMockData() {
         // Set class name
         classNameLabel.setText("כיתה: יוד571");
@@ -93,5 +132,6 @@ public class PresenceActivity extends MasterActivity {
         Log.d("PresenceActivity", "Simulated date: " + isoDate);
 
         // 🔜 Next: send this data to Firebase RTDB
+        uploadMockDataToFirebase();
     }
 }

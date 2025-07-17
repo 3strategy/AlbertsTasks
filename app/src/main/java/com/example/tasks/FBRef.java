@@ -5,6 +5,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.Calendar;
+
 // author: Guy Siedes 3strategy@gmail.com
 // with GPT o4 mini high, private chat  :  https://chatgpt.com/c/6878cad2-5d50-800e-8499-6db3a8fb9d88
 // usage guideline: https://מבני.שלי.com/android/projectSteps/newFBref
@@ -28,6 +30,9 @@ public class FBRef {
             refStudentsYear,
             refMaakavYear;
 
+    public static DatabaseReference refPresUidCurrentWeek;
+
+
     public static String uid;
 
     /**
@@ -43,6 +48,9 @@ public class FBRef {
         // ─── NEW branches ───
         refStudents    = FBDB.getReference("Students").child(uid);
         refMaakav      = FBDB.getReference("Maakav").child(uid);
+
+        int activeYear = Calendar.getInstance().get(Calendar.YEAR);  // or SharedPreferences.getInt(...)
+        setActiveYear(activeYear);
     }
 
     /**
@@ -50,19 +58,23 @@ public class FBRef {
      * call this so your three new branches narrow to {uid}/{year}.
      */
     public static void setActiveYear(int activeYear) {
-        String yy = String.valueOf(activeYear).substring(2);   // 👈 e.g. "25"
-        String rootKey = "P" + yy + "." + uid;                 // 👈 P25.abcd123
-        refPresenceRoot = FBDB.getReference(rootKey);         // 👈 single root for that teacher-year
+        String yy = String.valueOf(activeYear).substring(2);     // 👈 e.g. "25"
+        String rootKey = "P" + yy + "_" + uid;                    // 👈 P25.abcd123
+        refPresenceRoot = FBDB.getReference(rootKey);            // 👈 single root for that teacher-year
+        refStudentsYear = refStudents.child(String.valueOf(activeYear));
+        refMaakavYear   = refMaakav.child(String.valueOf(activeYear));
 
-        refStudentsYear   = refStudents.child(String.valueOf(activeYear));
-        refMaakavYear     = refMaakav.child(String.valueOf(activeYear));
+        // Also set current week subnode reference
+        int week = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR);
+        refPresUidCurrentWeek = refPresenceRoot.child("W" + week);  // e.g., P25.abcd123/W29
     }
+
 
     /**
      * Convenience overload: do both in one call.
      */
-    public static void getUser(FirebaseUser fbuser, int activeYear) {
-        getUser(fbuser);
-        setActiveYear(activeYear);
-    }
+//    public static void getUser(FirebaseUser fbuser, int activeYear) {
+//        getUser(fbuser);
+//        setActiveYear(activeYear);
+//    }
 }
