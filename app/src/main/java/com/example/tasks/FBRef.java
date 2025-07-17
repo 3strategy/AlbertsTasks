@@ -19,16 +19,13 @@ public class FBRef {
     public static DatabaseReference  refUsers    = FBDB.getReference("Users");
     public static DatabaseReference  refTasks,
             refDoneTasks,
-            refYears;
-
-    // ─── NEW: per-user branches ────────────────────────────────────────
-    public static DatabaseReference  refStudents,
-            refPresence,
+            refYears,
+            refStudents,
             refMaakav;
 
-    // ─── NEW: per-user per-year branches ──────────────────────────────
-    public static DatabaseReference  refStudentsYear,
-            refPresenceYear,
+    // NEW: smart tree root: P{YY}.{uid}
+    public static DatabaseReference  refPresenceRoot,
+            refStudentsYear,
             refMaakavYear;
 
     public static String uid;
@@ -45,7 +42,6 @@ public class FBRef {
 
         // ─── NEW branches ───
         refStudents    = FBDB.getReference("Students").child(uid);
-        refPresence    = FBDB.getReference("Presence").child(uid);
         refMaakav      = FBDB.getReference("Maakav").child(uid);
     }
 
@@ -54,10 +50,12 @@ public class FBRef {
      * call this so your three new branches narrow to {uid}/{year}.
      */
     public static void setActiveYear(int activeYear) {
-        String year = String.valueOf(activeYear);
-        refStudentsYear   = refStudents.child(year);
-        refPresenceYear   = refPresence.child(year);
-        refMaakavYear     = refMaakav.child(year);
+        String yy = String.valueOf(activeYear).substring(2);   // 👈 e.g. "25"
+        String rootKey = "P" + yy + "." + uid;                 // 👈 P25.abcd123
+        refPresenceRoot = FBDB.getReference(rootKey);         // 👈 single root for that teacher-year
+
+        refStudentsYear   = refStudents.child(String.valueOf(activeYear));
+        refMaakavYear     = refMaakav.child(String.valueOf(activeYear));
     }
 
     /**
