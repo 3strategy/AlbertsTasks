@@ -88,7 +88,9 @@ public class SpeechToTextService {
     }
 
     public void stopRecognition() {
-        speechRecognizer.stopListening();
-        speechRecognizer.destroy();
+        // stopListening() tells Android to deliver final onResults(...)
+        if (speechRecognizer != null) {
+            speechRecognizer.stopListening();
+        }
     }
 }
