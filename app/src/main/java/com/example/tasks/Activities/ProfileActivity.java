@@ -1,8 +1,10 @@
 package com.example.tasks.Activities;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -11,6 +13,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 
 import com.example.tasks.Obj.MasterActivity;
@@ -28,7 +32,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ProfileActivity extends MasterActivity {
+    // ① Define a launcher for taking a picture thumbnail:
+    private ActivityResultLauncher<Void> takePictureLauncher;
 
+    private static final int REQ_PHOTO = 123;
     private EditText usernameEdit;
     private Spinner activeYearSpinner;
     private Spinner defaultScreenSpinner;
@@ -91,11 +98,22 @@ public class ProfileActivity extends MasterActivity {
         // Load existing data
         loadProfile();
 
-        takePictureBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO: launch camera intent and handle onActivityResult
-            }
+        // ② Register the launcher BEFORE you call it:
+        takePictureLauncher = registerForActivityResult(
+                new ActivityResultContracts.TakePicturePreview(),
+                bitmap -> {
+                    if (bitmap != null) {
+                        // Display immediately
+                        profileImage.setImageBitmap(bitmap);
+                        // And push to RTDB as Base64
+                        uploadImage(bitmap);
+                    }
+                }
+        );
+
+        // ③ Wire your button to launch the camera:
+        takePictureBtn.setOnClickListener(v -> {
+            takePictureLauncher.launch(null);
         });
     }
 
@@ -148,11 +166,16 @@ public class ProfileActivity extends MasterActivity {
 
     // Utility to encode and upload image
     private void uploadImage(Bitmap bmp) {
+        // Your existing code: compress → Base64 → write to "b64jpg"
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 60, baos);
-        byte[] bytes = baos.toByteArray();
-        String b64 = Base64.encodeToString(bytes, Base64.DEFAULT);
-        userRef.child("b64jpg").setValue(b64);
+        bmp.compress(Bitmap.CompressFormat.JPEG, /*quality*/80, baos);
+        String b64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+        FirebaseDatabase
+                .getInstance()
+                .getReference("Users")
+                .child(FirebaseAuth.getInstance().getUid())
+                .child("b64jpg")
+                .setValue(b64);
     }
 
     // Spinner helper
