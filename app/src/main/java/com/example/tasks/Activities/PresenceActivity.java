@@ -253,13 +253,18 @@ public class PresenceActivity extends MasterActivity {
         }
         String timestampAndLesson = MMdd + MMM + "_" + roundedHHmm + "L" + lesson;
 
-        // 🔄 Data payload
+
+
+
+        // 🔄 MOCK Data payload
         Map<String, Object> payload = new HashMap<>();
         payload.put("class", "יוד571");
-        payload.put("detected", mockDetectedNames);
-        payload.put("missing", mockMissingNames);
+
+        payload.put("statusSummary", statusSummaryTextView.getText().toString());
+        payload.put("disturbances", disturbanceLabel.getText().toString());
+
         payload.put("rawTranscript", rawTranscripts);
-        payload.put("timestamp", System.currentTimeMillis());
+        //payload.put("timestamp", System.currentTimeMillis());
 
         // 🪄 Write using the clean FBRef
         refPresUidCurrentWeek
@@ -410,10 +415,14 @@ public class PresenceActivity extends MasterActivity {
         // 🔄 Data payload
         Map<String, Object> payload = new HashMap<>();
         payload.put("class", detectedClassName);
-        payload.put("detected", rawTranscripts);
-        payload.put("missing", new ArrayList<>());
+
+        payload.put("statusSummary", statusSummaryTextView.getText().toString());
+        payload.put("disturbances", disturbanceLabel.getText().toString());
+
+        //payload.put("detected", rawTranscripts);
+        //payload.put("missing", new ArrayList<>());
         payload.put("rawTranscript", rawTranscripts);
-        payload.put("timestamp", System.currentTimeMillis());
+        //payload.put("timestamp", System.currentTimeMillis());
 
         // 🪄 Write using the clean FBRef
         refPresUidCurrentWeek
