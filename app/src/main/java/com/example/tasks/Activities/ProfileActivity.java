@@ -1,4 +1,3 @@
-// ProfileActivity.java
 package com.example.tasks.Activities;
 
 import android.content.Intent;
@@ -60,7 +59,7 @@ public class ProfileActivity extends MasterActivity {
                 .child(currentUser.getUid());
 
         // Populate spinners
-        List<String> years = Arrays.asList("2023","2024","2025","2026");
+        List<String> years = Arrays.asList("2021","2022","2023","2024","2025","2026");
         ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, years);
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -102,12 +101,20 @@ public class ProfileActivity extends MasterActivity {
                 String uname = snap.child("username").getValue(String.class);
                 if (uname != null) usernameEdit.setText(uname);
 
-                // Active year
+                // Active year: try new 'activvvYear' then fallback to old key (userId)
                 String year = snap.child("activvvYear").getValue(String.class);
+                if (year == null) {
+                    // fallback to legacy key named as UID
+                    year = snap.child(currentUser.getUid()).getValue(String.class);
+                    if (year != null) {
+                        // persist to new location
+                        userRef.child("activvvYear").setValue(year);
+                    }
+                }
                 if (year != null) {
                     ArrayAdapter adapter = (ArrayAdapter) activeYearSpinner.getAdapter();
                     int pos = adapter.getPosition(year);
-                    activeYearSpinner.setSelection(pos);
+                    if (pos >= 0) activeYearSpinner.setSelection(pos);
                 }
 
                 // Default screen
@@ -115,7 +122,7 @@ public class ProfileActivity extends MasterActivity {
                 if (screen != null) {
                     ArrayAdapter adapter = (ArrayAdapter) defaultScreenSpinner.getAdapter();
                     int pos = adapter.getPosition(screen);
-                    defaultScreenSpinner.setSelection(pos);
+                    if (pos >= 0) defaultScreenSpinner.setSelection(pos);
                 }
 
                 // Profile image
