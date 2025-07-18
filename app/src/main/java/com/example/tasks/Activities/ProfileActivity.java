@@ -3,6 +3,7 @@ package com.example.tasks.Activities;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -12,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -34,7 +36,7 @@ import java.util.List;
 public class ProfileActivity extends MasterActivity {
     // ① Define a launcher for taking a picture thumbnail:
     private ActivityResultLauncher<Void> takePictureLauncher;
-
+    private TextView tvStudentsSheetLink; // link to the students google sheet.
     private static final int REQ_PHOTO = 123;
     private EditText usernameEdit;
     private Spinner activeYearSpinner;
@@ -50,7 +52,8 @@ public class ProfileActivity extends MasterActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
-
+        // findViewById
+        tvStudentsSheetLink = findViewById(R.id.tvStudentsSheetLink);
         // Views
         usernameEdit = findViewById(R.id.usernameEdit);
         activeYearSpinner = findViewById(R.id.activeYearSpinner);
@@ -154,9 +157,22 @@ public class ProfileActivity extends MasterActivity {
                     profileImage.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
                 }
 
+                // Students Sheet URL
+                String sheetUrl = snap.child("studentsSheetUrl").getValue(String.class);
+                if (sheetUrl != null && !sheetUrl.isEmpty()) {
+                    tvStudentsSheetLink.setText(sheetUrl);
+                    tvStudentsSheetLink.setVisibility(View.VISIBLE);
+                    tvStudentsSheetLink.setOnClickListener(v -> {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                                Uri.parse(sheetUrl));
+                        startActivity(browserIntent);
+                    });
+                }
+
                 // Now allow spinner callbacks to write changes
                 isSpinnersLoaded = true;
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
