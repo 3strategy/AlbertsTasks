@@ -33,8 +33,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
+/// all students is loaded asynchronouly from RTDB during Login, and openning of the
+/// PresenceActivity is conditioned by its completion.
 import static com.example.tasks.FBRef.allStudents;
+
+/// this is a narrow branch calculated reference.
+/// An efficient flat tree branch (3 levels):
+/// /P{YY}_{uid}/W{current week}/{MMDDMMM_HHmmL#}/
+/// /P25_tTe3W4vIjHe0HSqRXxAIUBxIzKg1/W29/0718Jul_0830L1
+/// the month apears twich - 1st for lexicograpic sort, and then for legibility of 18Jul date
+/// it holds a lesson report (here the lesson at 0830 is L1 meaning lesson #1 of the day)
 import static com.example.tasks.FBRef.refPresUidCurrentWeek;
 
 
@@ -89,6 +97,15 @@ public class PresenceActivity extends MasterActivity {
         );
         attendanceList.setAdapter(adapter);
 
+        /// The speech service will do Speech To Text and after accumulating some names
+        /// will identify which class they belong to, and display the data of
+        /// the names that are yet to be read and accounted for.
+        /// all this is stored in RTDB
+        /// in an efficient flat tree branch (3 levels):
+        /// /P{YY}_{uid}/W{current week}/{MMDDMMM_HHmmL#}/
+        /// /P25_tTe3W4vIjHe0HSqRXxAIUBxIzKg1/W29/0718Jul_0650L-1/
+        /// the storage topology is aimed at give the teacher a NARROW branch to look at (the Week level)
+        /// instead of a monthly or yearly view which contains too many reports.
         speechService = new SpeechToTextService(this,
                 new SpeechToTextService.OnSpeechRecognizedListener() {
                     @Override
@@ -106,8 +123,10 @@ public class PresenceActivity extends MasterActivity {
                             adapter.add(entry);
                             rawTranscripts.add(entry);
 
-
-                            // 2. Split into words, normalize, collect
+                            /// 2. we need this collection to be able to compare against nicknames
+                            /// what we do is: Split into words, normalize, collect
+                            /// later on the collected words will be used by detectClass
+                            /// to identify the class.
                             for (String w : text.split("\\s+")) {
                                 String norm = w
                                         .replaceAll("[^\\p{L}\\p{Nd}]", "")      // strip punctuation
@@ -117,9 +136,9 @@ public class PresenceActivity extends MasterActivity {
                                 }
                             }
 
-                            // 3. Once we have enough words, try to detect class
-
-                            // <= 8 <= 6
+                            /// 3. Once we have enough words, try to detect class
+                            /// here - we meet the entry condition for detectClass() >= 8 >= 6
+                            /// so we try detecting againts the collectedWords
                             if (detectedClassName == null && collectedWords.size() > 3 &&
                                     detectClass()) { // run onces
                                 classNameLabel.setText("כיתה: " + detectedClassName);
@@ -137,12 +156,27 @@ public class PresenceActivity extends MasterActivity {
                                 // filter out the ones we heard
                                 List<String> missing = new ArrayList<>();
                                 for (String nick : classNicks) {
+                                    /// now that we have the class's nicknames
+                                    /// we can check which names are missing (i.e. teacher has not
+                                    /// called out their name - and they may be present).
                                     if (!collectedWords.contains(nick.toLowerCase(Locale.getDefault()))) {
                                         missing.add(nick);
                                     }
                                 }
 
-                                // populate your red TextView
+                                /// This red missingStudentsLabel will keep getting updated
+                                /// again and again (each time teacher stops talking) and will
+                                /// become smaller and smaller
+                                /// Eventually, the teacher has every student accounted for
+                                /// and all is stored in DB.
+                                /// /class: יוד571
+                                /// /rawTranscript/
+                                /// [08:31:15] נאיה אלה הילה
+                                /// [08:31:22] ארז יותם יובל
+                                /// [08:31:27] אורי נועם עומר
+                                /// while this data may seem useless (inaccurate) it can be
+                                /// reverse mapped to the Student's id, so this is in fact
+                                /// both legible and useful.
                                 String missingText = missing.isEmpty()
                                         ? "לא דווחו: כל התלמידים"
                                         : "לא דווחו: " + TextUtils.join(", ", missing);
@@ -182,6 +216,7 @@ public class PresenceActivity extends MasterActivity {
         });
     }
 
+    /// was used in the dev process before Speech was introduced.
     private void uploadMockDataToFirebase() {
         // 🗓 Get current time
         Calendar now = Calendar.getInstance();
@@ -220,6 +255,9 @@ public class PresenceActivity extends MasterActivity {
     }
 
 
+    /// was used in the dev process before speech was introduced.
+    /// to work with this you need to revive the btnDebug that was
+    /// btn deleted on build of 18Jul 07:48am
     private void populateMockData() {
         // Set class name
         classNameLabel.setText("כיתה: יוד571");
@@ -276,9 +314,9 @@ public class PresenceActivity extends MasterActivity {
      * TEMPORARY: Determine rounded time and lesson number based on current time.
      * Assumes:
      * - L1 starts at 08:30
-     * - 50-minute slots
+     * - 50-minute slots (roughly covers for intermissions)
      * - Round to nearest slot start using ±25 min
-     *
+     * 💡 A more robust solution could work againt a list of start/end tuples representing school day schedules
      * @param now current time
      * @return Pair of ("HHmm" rounded start time string, lesson number), or (-1) if out of range
      */
@@ -291,7 +329,7 @@ public class PresenceActivity extends MasterActivity {
 
         int minValid = baseStart - 25;
         int maxValid = baseStart + lessonDuration * (maxLessons - 1) + 25;
-
+// I prefer all hours of the day return some result and not -1.
 //        if (totalMinutes < minValid || totalMinutes > maxValid) {
 //            return new Pair<>(null, -1);  // outside school time
 //        }
@@ -326,6 +364,8 @@ public class PresenceActivity extends MasterActivity {
 
     /**
      * 🔄 Pushes a single transcript entry to RTDB using rounded-time + lesson key
+     * /P{YY}_{uid}/W{current week}/{MMDDMMM_HHmmL#}/
+     * /P25_tTe3W4vIjHe0HSqRXxAIUBxIzKg1/W29/0718Jul_0830L1
      */
     private void pushRawTranscript(String newEntry) {
         // 🗓 Get current time
@@ -368,6 +408,9 @@ public class PresenceActivity extends MasterActivity {
     }
 
 
+    /**
+     * 🔍 identifying the most probable class.
+     */
     private Boolean detectClass() {
         // 1. Build map of ClassName → count
         Map<String, Integer> classMatches = new HashMap<>();
@@ -375,7 +418,8 @@ public class PresenceActivity extends MasterActivity {
             classMatches.putIfAbsent(s.getClassName(), 0);
         }
 
-        // 2. For each class, count how many nicknames appear
+        /// 2. For each class, count how many nicknames appear
+        ///  this is just counting how many times each nickname appears
         for (String cls : new ArrayList<>(classMatches.keySet())) {
             int count = 0;
             for (Student s : allStudents) {
@@ -388,7 +432,7 @@ public class PresenceActivity extends MasterActivity {
             classMatches.put(cls, count);
         }
 
-        // 3. Find best match
+        // 3. Find best match - identifying the most probable class.
         String bestClass = null;
         int bestCount = 0;
         for (Map.Entry<String, Integer> e : classMatches.entrySet()) {

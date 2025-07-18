@@ -20,6 +20,9 @@ import java.util.List;
 // with GPT o4 mini high, private chat  :  https://chatgpt.com/c/6878cad2-5d50-800e-8499-6db3a8fb9d88
 // usage guideline: https://מבני.שלי.com/android/projectSteps/newFBref
 public class FBRef {
+
+    // all students is loaded asynchronouly from RTDB during Login, and openning of the
+    // PresenceActivity is conditioned by its completion.
     public static List<Student> allStudents = new ArrayList<>();
 
     // ─── auth & root DB ───────────────────────────────────────────────
