@@ -128,8 +128,8 @@ public class PresenceActivity extends MasterActivity {
 
                             // 3. Once we have enough words, try to detect class
 
-
-                            if (detectedClassName == null && collectedWords.size() >= 6 &&
+                            // <= 8 <= 6
+                            if (detectedClassName == null && collectedWords.size() > 3 &&
                                     detectClass()) { // run onces
                                 classNameLabel.setText("כיתה: " + detectedClassName);
 
@@ -167,7 +167,7 @@ public class PresenceActivity extends MasterActivity {
         );
 
         // 🧪 Hook debug button
-        btnDebug.setOnClickListener(v -> populateMockData());
+        //btnDebug.setOnClickListener(v -> populateMockData());
 
         // 🔊 Start recognition
         btnStart.setOnClickListener(v -> {
@@ -180,15 +180,15 @@ public class PresenceActivity extends MasterActivity {
             } else {
                 transcriptTextView.setText(""); // clear on new session
                 speechService.startRecognition();
-                btnStop.setEnabled(true);
+                //btnStop.setEnabled(true);
             }
         });
 
         // 🔇 Stop recognition
-        btnStop.setOnClickListener(v -> {
-            speechService.stopRecognition();
-            btnStop.setEnabled(false);
-        });
+//        btnStop.setOnClickListener(v -> {
+//            speechService.stopRecognition();
+//            btnStop.setEnabled(false);
+//        });
     }
 
     private void uploadMockDataToFirebase() {
