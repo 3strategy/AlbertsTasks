@@ -88,7 +88,7 @@ public class PresenceActivity extends MasterActivity {
         attendanceList = findViewById(R.id.attendanceList);
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
-        btnDebug = findViewById(R.id.btnDebug);
+        //btnDebug = findViewById(R.id.btnDebug);
 
         // Prepare list adapter for final results
         adapter = new ArrayAdapter<>(
@@ -180,15 +180,15 @@ public class PresenceActivity extends MasterActivity {
             } else {
                 transcriptTextView.setText(""); // clear on new session
                 speechService.startRecognition();
-                //btnStop.setEnabled(true);
+                btnStop.setEnabled(true);
             }
         });
 
         // 🔇 Stop recognition
-//        btnStop.setOnClickListener(v -> {
-//            speechService.stopRecognition();
-//            btnStop.setEnabled(false);
-//        });
+        btnStop.setOnClickListener(v -> {
+            speechService.stopRecognition();
+            btnStop.setEnabled(false);
+        });
     }
 
     private void uploadMockDataToFirebase() {
