@@ -52,13 +52,35 @@
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"/>
 
+    <!-- Insert these TextViews just below the rawTranscriptTextView -->
+    <TextView
+        android:id="@+id/statusSummaryTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="סטטוס נוכחות:"
+        android:textSize="16sp"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@id/transcriptTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/disturbanceLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="הפרעות:"
+        android:textColor="#B00020"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@id/statusSummaryTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
     <!-- Start and Stop buttons -->
     <LinearLayout
         android:id="@+id/buttonRow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/transcriptTextView"
+        app:layout_constraintTop_toBottomOf="@id/disturbanceLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp">

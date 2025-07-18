@@ -18,10 +18,12 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
 import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 import com.example.tasks.SpeechToTextService;
 import com.example.tasks.models.Student;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +49,13 @@ import static com.example.tasks.FBRef.refPresUidCurrentWeek;
 
 
 public class PresenceActivity extends MasterActivity {
+
+    private TextView statusSummaryTextView;
+    private TextView disturbanceLabel;
+
+    // Data model to hold each student's current status and disturbances flag
+    private Map<String, String> studentStatus = new HashMap<>();
+    private Set<String> disturbanceSet = new HashSet<>();
 
     //private List<Student> allStudents;              // loaded from RTDB
     private Set<String> collectedWords = new HashSet<>();
@@ -88,6 +97,10 @@ public class PresenceActivity extends MasterActivity {
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
         //btnDebug = findViewById(R.id.btnDebug);
+        statusSummaryTextView = findViewById(R.id.statusSummaryTextView);
+        disturbanceLabel = findViewById(R.id.disturbanceLabel);
+
+        //updateStatusUI("some data", "some data2");
 
         // Prepare list adapter for final results
         adapter = new ArrayAdapter<>(
@@ -181,6 +194,8 @@ public class PresenceActivity extends MasterActivity {
                                         ? "לא דווחו: כל התלמידים"
                                         : "לא דווחו: " + TextUtils.join(", ", missing);
                                 missingStudentsLabel.setText(missingText);
+
+                                analyzeTranscriptLine(text); // send text for special anaysis for being late / missing etc.
 
                                 pushRawTranscript(entry);
                             }
@@ -317,6 +332,7 @@ public class PresenceActivity extends MasterActivity {
      * - 50-minute slots (roughly covers for intermissions)
      * - Round to nearest slot start using ±25 min
      * 💡 A more robust solution could work againt a list of start/end tuples representing school day schedules
+     *
      * @param now current time
      * @return Pair of ("HHmm" rounded start time string, lesson number), or (-1) if out of range
      */
@@ -453,4 +469,110 @@ public class PresenceActivity extends MasterActivity {
         return false;
     }
 
+    /**
+     * Parses a single transcript line and updates student statuses.
+     * Call this inside onResults() for each new full transcript.
+     */
+    private void analyzeTranscriptLine(String line) {
+        // Normalize line
+        String text = line.trim();
+        if (text.isEmpty()) return;
+
+        // Determine category keyword and student names
+        String[] tokens = text.split("\\s+");
+        String keyword = tokens[0];
+        List<String> names = Arrays.asList(Arrays.copyOfRange(tokens, 1, tokens.length));
+
+        // Map Hebrew keyword to status
+        String status;
+        switch (keyword) {
+            case "בזמן":
+                status = "בזמן";
+                break;
+            case "איחור":
+                status = "מאחרים";
+                break;
+            case "מאחרים":
+                status = "מאחרים";
+                break;
+            case "חיסור":
+                status = "חסרים";
+            case "חסרים":
+                status = "חסרים";
+                break;
+            case "חסרות" /* alternative form */:
+                status = "חסרים";
+                break;
+            case "חסרה":
+                status = "חסרים";
+                break;
+            case "חולים":
+                status = "מחלה";
+                break;
+            case "הפרעה":
+                // disturbance only, keep existing status
+                disturbanceSet.addAll(names);
+                updateUI();
+                return;
+            default:
+                return; // unrecognized
+        }
+
+        // Update each student
+        for (String name : names) {
+            // If clearing (בזמן), remove disturbance flag and reset status only for these names
+            if (status.equals("בזמן")) {
+                studentStatus.put(name, "בזמן");
+                //disturbanceSet.remove(name);
+            } else {
+                // For lateness, always overwrite missing
+                studentStatus.put(name, status);
+            }
+        }
+
+        // Refresh UI after each line
+        updateUI();
+    }
+
+    /**
+     * Builds the summary strings and updates the TextViews.
+     */
+    private void updateUI() {
+        // Group by status
+        Map<String, List<String>> grouped = new HashMap<>();
+        for (Map.Entry<String, String> e : studentStatus.entrySet()) {
+            grouped.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
+        }
+
+        // Build status summary
+        StringBuilder summary = new StringBuilder();
+        for (String key : Arrays.asList("בזמן", "מאחרים", "חסרים", "מחלה")) {
+            List<String> list = grouped.get(key);
+            if (list != null && !list.isEmpty()) {
+                summary.append(key).append(": ").append(TextUtils.join(", ", list)).append("\n");
+            }
+        }
+
+        // Build disturbance summary
+        String disturbanceText = disturbanceSet.isEmpty()
+                ? "הפרעות: אין"
+                : "הפרעות: " + TextUtils.join(", ", disturbanceSet);
+
+        // Apply to UI
+        statusSummaryTextView.setText(summary.toString().trim());
+        disturbanceLabel.setText(disturbanceText);
+    }
+
+    // In onResults(String text):
+    // for (String line : text.split("\\r?\\n")) {
+    //     analyzeTranscriptLine(line);
+    // }
+
+//    /**
+//     * Call this from your transcript update logic to refresh the UI
+//     */
+//    private void updateStatusUI(String summary, String disturbances) {
+//        statusSummaryTextView.setText(summary);
+//        disturbanceLabel.setText(disturbances);
+//    }
 }
