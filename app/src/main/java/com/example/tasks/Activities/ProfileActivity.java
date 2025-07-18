@@ -74,7 +74,7 @@ public class ProfileActivity extends MasterActivity {
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         activeYearSpinner.setAdapter(yearAdapter);
 
-        List<String> screens = Arrays.asList("Presence", "Reports", "Profile", "Task",  "MainTask");
+        List<String> screens = Arrays.asList("Presence", "Reports", "Profile", "Task", "MainTask");
         ArrayAdapter<String> screenAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, screens);
         screenAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -160,7 +160,8 @@ public class ProfileActivity extends MasterActivity {
                 // Students Sheet URL
                 String sheetUrl = snap.child("studentsSheetUrl").getValue(String.class);
                 if (sheetUrl != null && !sheetUrl.isEmpty()) {
-                    tvStudentsSheetLink.setText(sheetUrl);
+                    // הצגת טקסט תיאורי במקום ה-URL הארוך
+                    tvStudentsSheetLink.setText(R.string.string_link_google_sheet);
                     tvStudentsSheetLink.setVisibility(View.VISIBLE);
                     tvStudentsSheetLink.setOnClickListener(v -> {
                         Intent browserIntent = new Intent(Intent.ACTION_VIEW,
