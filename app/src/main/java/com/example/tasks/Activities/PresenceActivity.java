@@ -51,6 +51,7 @@ public class PresenceActivity extends MasterActivity {
 
     //private List<Student> allStudents;              // loaded from RTDB
     private Set<String> collectedWords = new HashSet<>();
+    List<String> classNicks;
     private String detectedClassName = null;
     private TextView classNameTextView;
     private SpeechToTextService speechService;
@@ -113,7 +114,7 @@ public class PresenceActivity extends MasterActivity {
                             String entry = "[" + ts + "] " + text;
                             adapter.add(entry);
                             rawTranscripts.add(entry);
-                            pushRawTranscript(entry);
+
 
                             // 2. Split into words, normalize, collect
                             for (String w : text.split("\\s+")) {
@@ -128,36 +129,38 @@ public class PresenceActivity extends MasterActivity {
                             // 3. Once we have enough words, try to detect class
 
 
-                            if (detectedClassName == null && collectedWords.size() >= 8) {
-                                detectClass(); //String cls = // אבל אם יש זמן - לפחות שיחזיר true/false
-                                if (true) {
-                                    //detectedClassName = cls;
-                                    classNameLabel.setText("כיתה: " + detectedClassName);
+                            if (detectedClassName == null && collectedWords.size() >= 6 &&
+                                    detectClass()) { // run onces
+                                classNameLabel.setText("כיתה: " + detectedClassName);
 
-                                    // build list of this class’s nicknames
-                                    List<String> classNicks = new ArrayList<>();
-                                    for (Student s : allStudents) {
-                                        if (detectedClassName.equals(s.getClassName())) {
-                                            classNicks.add(s.getNickName());
-                                        }
+                                // build list of this class’s nicknames
+                                classNicks = new ArrayList<>();
+                                for (Student s : allStudents) {
+                                    if (detectedClassName.equals(s.getClassName())) {
+                                        classNicks.add(s.getNickName());
                                     }
-
-                                    // filter out the ones we heard
-                                    List<String> missing = new ArrayList<>();
-                                    for (String nick : classNicks) {
-                                        if (!collectedWords.contains(nick.toLowerCase(Locale.getDefault()))) {
-                                            missing.add(nick);
-                                        }
-                                    }
-
-                                    // populate your red TextView
-                                    String missingText = missing.isEmpty()
-                                            ? "לא דווחו: כל התלמידים"
-                                            : "לא דווחו: " + TextUtils.join(", ", missing);
-                                    missingStudentsLabel.setText(missingText);
                                 }
                             }
-                            pushRawTranscript(entry);
+
+                            if (classNicks != null) {
+                                // filter out the ones we heard
+                                List<String> missing = new ArrayList<>();
+                                for (String nick : classNicks) {
+                                    if (!collectedWords.contains(nick.toLowerCase(Locale.getDefault()))) {
+                                        missing.add(nick);
+                                    }
+                                }
+
+                                // populate your red TextView
+                                String missingText = missing.isEmpty()
+                                        ? "לא דווחו: כל התלמידים"
+                                        : "לא דווחו: " + TextUtils.join(", ", missing);
+                                missingStudentsLabel.setText(missingText);
+
+                                pushRawTranscript(entry);
+                            }
+
+                            //pushRawTranscript(entry);
                         });
                     }
                 }
@@ -298,9 +301,9 @@ public class PresenceActivity extends MasterActivity {
         int minValid = baseStart - 25;
         int maxValid = baseStart + lessonDuration * (maxLessons - 1) + 25;
 
-        if (totalMinutes < minValid || totalMinutes > maxValid) {
-            return new Pair<>(null, -1);  // outside school time
-        }
+//        if (totalMinutes < minValid || totalMinutes > maxValid) {
+//            return new Pair<>(null, -1);  // outside school time
+//        }
 
         int roundedIndex = Math.round((totalMinutes - baseStart) / (float) lessonDuration);
         int lessonStartMinutes = baseStart + roundedIndex * lessonDuration;
@@ -351,7 +354,7 @@ public class PresenceActivity extends MasterActivity {
         Pair<String, Integer> lessonInfo = getRoundedTimeAndLessonSlot(now);
         String roundedHHmm = lessonInfo.first;
         int lesson = lessonInfo.second;
-        if (lesson == -1) {
+        if (lesson == -4) {
             Log.e("PresenceActivity", "Time not in valid school hours");
             return;
         }
@@ -374,7 +377,7 @@ public class PresenceActivity extends MasterActivity {
     }
 
 
-    private void detectClass() {
+    private Boolean detectClass() {
         // 1. Build map of ClassName → count
         Map<String, Integer> classMatches = new HashMap<>();
         for (Student s : allStudents) {
@@ -410,7 +413,9 @@ public class PresenceActivity extends MasterActivity {
             runOnUiThread(() ->
                     classNameLabel.setText("כיתה: " + detectedClassName)
             );
+            return true;
         }
+        return false;
     }
 
 }
