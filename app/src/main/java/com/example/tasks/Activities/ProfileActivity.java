@@ -130,7 +130,7 @@ public class ProfileActivity extends MasterActivity {
                 }
 
                 // Profile image
-                String b64 = snap.child("b64jpg").getValue(String.class);
+                String b64 = snap.child("profileImage").getValue(String.class);
                 if (b64 != null) {
                     byte[] data = Base64.decode(b64, Base64.DEFAULT);
                     profileImage.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
