@@ -45,11 +45,11 @@ public class ProfileActivity extends MasterActivity {
         setContentView(R.layout.activity_profile);
 
         // Views
-        usernameEdit        = findViewById(R.id.usernameEdit);
-        activeYearSpinner   = findViewById(R.id.activeYearSpinner);
-        defaultScreenSpinner= findViewById(R.id.defaultScreenSpinner);
-        takePictureBtn      = findViewById(R.id.takePictureBtn);
-        profileImage        = findViewById(R.id.profileImage);
+        usernameEdit = findViewById(R.id.usernameEdit);
+        activeYearSpinner = findViewById(R.id.activeYearSpinner);
+        defaultScreenSpinner = findViewById(R.id.defaultScreenSpinner);
+        takePictureBtn = findViewById(R.id.takePictureBtn);
+        profileImage = findViewById(R.id.profileImage);
 
         // Firebase refs
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -58,13 +58,13 @@ public class ProfileActivity extends MasterActivity {
                 .child(currentUser.getUid());
 
         // Populate spinners
-        List<String> years = Arrays.asList("2023","2024","2025","2026");
+        List<String> years = Arrays.asList("2023", "2024", "2025", "2026");
         ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, years);
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         activeYearSpinner.setAdapter(yearAdapter);
 
-        List<String> screens = Arrays.asList("Presence","Tasks","Reports");
+        List<String> screens = Arrays.asList("Presence", "Task", "Reports", "MainTask");
         ArrayAdapter<String> screenAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, screens);
         screenAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -92,7 +92,8 @@ public class ProfileActivity extends MasterActivity {
         loadProfile();
 
         takePictureBtn.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) {
+            @Override
+            public void onClick(View v) {
                 // TODO: launch camera intent and handle onActivityResult
             }
         });
@@ -132,14 +133,16 @@ public class ProfileActivity extends MasterActivity {
                 String b64 = snap.child("b64jpg").getValue(String.class);
                 if (b64 != null) {
                     byte[] data = Base64.decode(b64, Base64.DEFAULT);
-                    profileImage.setImageBitmap(BitmapFactory.decodeByteArray(data,0,data.length));
+                    profileImage.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));
                 }
 
                 // Now allow spinner callbacks to write changes
                 isSpinnersLoaded = true;
             }
 
-            @Override public void onCancelled(@NonNull DatabaseError error) {}
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
         });
     }
 
@@ -154,10 +157,15 @@ public class ProfileActivity extends MasterActivity {
 
     // Spinner helper
     private abstract static class SimpleItemSelectedListener implements android.widget.AdapterView.OnItemSelectedListener {
-        @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
-        @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
+        @Override
+        public void onNothingSelected(android.widget.AdapterView<?> parent) {
+        }
+
+        @Override
+        public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
             onItemSelected(parent.getItemAtPosition(pos).toString());
         }
+
         public abstract void onItemSelected(String value);
     }
 }

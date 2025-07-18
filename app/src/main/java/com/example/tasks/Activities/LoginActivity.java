@@ -1,3 +1,4 @@
+
 package com.example.tasks.Activities;
 
 import static com.example.tasks.FBRef.*;
@@ -35,15 +36,19 @@ import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 /**
- * @author		Albert Levy albert.school2015@gmail.com
- * @version     2.1
- * @since		9/3/2024
- * <p>
+ * @author Albert Levy albert.school2015@gmail.com
+ * @version 2.1
+ * @see AppCompatActivity
+ * @see FirebaseAuth
+ * @see FirebaseDatabase
+ * @see SharedPreferences
+ * @since 9/3/2024 <p>
  * Activity for handling user login and registration.
  * <p>
  * This activity allows users to either log in with existing credentials or
@@ -61,11 +66,6 @@ import com.google.firebase.database.ValueEventListener;
  *     <li>Dynamic UI changes to switch between login and registration forms.</li>
  * </ul>
  * Upon successful login or registration, the user is navigated to {@link MainActivity}.
- *
- * @see AppCompatActivity
- * @see FirebaseAuth
- * @see FirebaseDatabase
- * @see SharedPreferences
  */
 public class LoginActivity extends AppCompatActivity {
 
@@ -80,6 +80,8 @@ public class LoginActivity extends AppCompatActivity {
     private SharedPreferences settings;
     private int activeYear = 1970;
     private final int REQUEST_CODE = 100;
+    private FirebaseAuth refAuth;
+    private DatabaseReference profileRef;
 
     /**
      * Called when the activity is first created.
@@ -95,25 +97,15 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        settings=getSharedPreferences("PREFS_NAME",MODE_PRIVATE);
+        settings = getSharedPreferences("PREFS_NAME", MODE_PRIVATE);
+        refAuth = FirebaseAuth.getInstance();
         initViews();
-        stayConnect=false;
-        registered=true;
+
+        stayConnect = false;
+        registered = true;
         regoption();
     }
 
-    /**
-     * Initializes all UI view components by finding them by their ID.
-     */
-    private void initViews() {
-        tVtitle=(TextView) findViewById(R.id.tVtitle);
-        eTname=(EditText)findViewById(R.id.eTname);
-        eTemail=(EditText)findViewById(R.id.eTemail);
-        eTpass=(EditText)findViewById(R.id.eTpass);
-        cBstayconnect=(CheckBox)findViewById(R.id.cBstayconnect);
-        tVregister=(TextView) findViewById(R.id.tVregister);
-        btn=(Button)findViewById(R.id.btn);
-    }
 
     /**
      * Called when the activity is becoming visible to the user.
@@ -125,15 +117,49 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Boolean isChecked=settings.getBoolean("stayConnect",false);
-        Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
-        if (refAuth.getCurrentUser()!=null && isChecked) {
-            FBRef.getUser(refAuth.getCurrentUser());
-            stayConnect=true;
-            si.putExtra("isNewUser", false);
-            // only go to PresenceActivity once students are loaded
-            FBRef.loadAllStudents(() -> startActivity(si));
+        boolean isChecked = settings.getBoolean("stayConnect", false);
+        FirebaseUser user = refAuth.getCurrentUser();
+        if (user != null && isChecked) {
+            FBRef.getUser(user);
+            // Launch preferred activity after loading students
+            profileRef = FirebaseDatabase.getInstance()
+                    .getReference("Users")
+                    .child(user.getUid());
+            profileRef.child("preferredActivity")
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snap) {
+                            String pref = snap.getValue(String.class);
+                            Class<?> target;
+                            if ("Tasks".equals(pref)) {
+                                target = TaskActivity.class;
+                            } else if ("Reports".equals(pref)) {
+                                target = ReportsActivity.class;
+                            } else {
+                                target = PresenceActivity.class;
+                            }
+                            Intent i = new Intent(LoginActivity.this, target);
+                            FBRef.loadAllStudents(() -> startActivity(i));
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
         }
+    }
+
+    /**
+     * Initializes all UI view components by finding them by their ID.
+     */
+    private void initViews() {
+        tVtitle = findViewById(R.id.tVtitle);
+        eTname = findViewById(R.id.eTname);
+        eTemail = findViewById(R.id.eTemail);
+        eTpass = findViewById(R.id.eTpass);
+        cBstayconnect = findViewById(R.id.cBstayconnect);
+        tVregister = findViewById(R.id.tVregister);
+        btn = findViewById(R.id.btn);
     }
 
     /**
@@ -162,7 +188,7 @@ public class LoginActivity extends AppCompatActivity {
                 tVtitle.setText("Register");
                 eTname.setVisibility(View.VISIBLE);
                 btn.setText("Register");
-                registered=false;
+                registered = false;
                 logoption();
             }
         };
@@ -185,7 +211,7 @@ public class LoginActivity extends AppCompatActivity {
                 tVtitle.setText("Login");
                 eTname.setVisibility(View.INVISIBLE);
                 btn.setText("Login");
-                registered=true;
+                registered = true;
                 regoption();
             }
         };
@@ -211,66 +237,84 @@ public class LoginActivity extends AppCompatActivity {
      */
     public void logorreg(View view) {
         if (registered) {
-            email=eTemail.getText().toString();
-            password=eTpass.getText().toString();
-
-            final ProgressDialog pd=ProgressDialog.show(this,"Login","Connecting...",true);
+            // Login flow
+            String email = eTemail.getText().toString();
+            String password = eTpass.getText().toString();
+            ProgressDialog pd = ProgressDialog.show(this, "Login", "Connecting...", true);
             refAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            pd.dismiss();
-                            if (task.isSuccessful()) {
-                                FBRef.getUser(refAuth.getCurrentUser());
-                                Log.d("PresenceActivity", "signinUserWithEmail:success");
-                                Toast.makeText(LoginActivity.this, "Login Success", Toast.LENGTH_SHORT).show();
-                                settings = getSharedPreferences("PREFS_NAME",MODE_PRIVATE);
-                                activeYear = settings.getInt("activeYear",1970);
-                                if (activeYear == 1970) {
-                                    lostData();
-                                } else {
-                                    SharedPreferences.Editor editor=settings.edit();
-                                    editor.putBoolean("stayConnect",cBstayconnect.isChecked());
-                                    editor.commit();
-                                    final Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
-                                    // delay navigation until students are ready
-                                    FBRef.loadAllStudents(() -> startActivity(si));
-                                }
-                            } else {
-                                Log.d("PresenceActivity", "signinUserWithEmail:fail");
-                                Toast.makeText(LoginActivity.this, "e-mail or password are wrong!", Toast.LENGTH_LONG).show();
-                            }
+                    .addOnCompleteListener(this, task -> {
+                        pd.dismiss();
+                        if (task.isSuccessful()) {
+                            FirebaseUser user = refAuth.getCurrentUser();
+                            FBRef.getUser(user);
+                            settings.edit()
+                                    .putBoolean("stayConnect", cBstayconnect.isChecked())
+                                    .apply();
+
+                            profileRef = FirebaseDatabase.getInstance()
+                                    .getReference("Users")
+                                    .child(user.getUid());
+                            profileRef.child("preferredActivity")
+                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(@NonNull DataSnapshot snap) {
+                                            String pref = snap.getValue(String.class);
+                                            Class<?> target;
+                                            if ("Tasks".equals(pref)) {
+                                                target = TaskActivity.class;
+                                            } else if ("MainTask".equals(pref)) {
+                                                target = MainActivity.class;
+                                            } else if ("Reports".equals(pref)) {
+                                                target = ReportsActivity.class;
+                                            } else {
+                                                target = PresenceActivity.class;
+                                            }
+                                            Intent i = new Intent(LoginActivity.this, target);
+                                            FBRef.loadAllStudents(() -> startActivity(i));
+                                        }
+
+                                        @Override
+                                        public void onCancelled(@NonNull DatabaseError error) {
+                                        }
+                                    });
+                        } else {
+                            Toast.makeText(LoginActivity.this,
+                                    "E-mail or password are wrong!", Toast.LENGTH_LONG).show();
                         }
                     });
         } else {
-            name=eTname.getText().toString();
-            email=eTemail.getText().toString();
-            password=eTpass.getText().toString();
-
-            final ProgressDialog pd=ProgressDialog.show(this,"Register","Registering...",true);
+            // Registration flow unchanged
+            name = eTname.getText().toString();
+            email = eTemail.getText().toString();
+            password = eTpass.getText().toString();
+            ProgressDialog pd = ProgressDialog.show(this, "Register", "Registering...", true);
             refAuth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            pd.dismiss();
-                            if (task.isSuccessful()) {
-                                FirebaseUser user = refAuth.getCurrentUser();
-                                FBRef.getUser(user);
-                                Log.d("PresenceActivity", "createUserWithEmail:success");
-                                uid = user.getUid();
-                                userdb=new User(uid,name);
-                                refUsers.child(uid).setValue(userdb);
-                                Toast.makeText(LoginActivity.this, "Successful registration", Toast.LENGTH_SHORT).show();
-                                setActiveYear();
-                            } else {
-                                if (task.getException() instanceof FirebaseAuthUserCollisionException)
-                                    Toast.makeText(LoginActivity.this, "User with e-mail already exist!", Toast.LENGTH_SHORT).show();
-                                else {
-                                    Log.w("PresenceActivity", "createUserWithEmail:failure", task.getException());
-                                    Toast.makeText(LoginActivity.this, "User create failed.",Toast.LENGTH_LONG).show();
-                                }
+                    .addOnCompleteListener(this, task -> {
+                        pd.dismiss();
+                        if (task.isSuccessful()) {
+                            FirebaseUser user = refAuth.getCurrentUser();
+                            FBRef.getUser(user);
+                            Log.d("PresenceActivity", "createUserWithEmail:success");
+                            uid = user.getUid();
+                            userdb = new User(uid, name);
+                            refUsers.child(uid).setValue(userdb);
+                            settings.edit()
+                                    .putBoolean("stayConnect", cBstayconnect.isChecked())
+                                    .apply();
+                            Toast.makeText(LoginActivity.this, "Successful registration", Toast.LENGTH_SHORT).show();
+                            setActiveYear();
+                        } else if (task.getException() instanceof FirebaseAuthUserCollisionException) {
+                            Toast.makeText(LoginActivity.this,
+                                    "User with e-mail already exists!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            if (task.getException() instanceof FirebaseAuthUserCollisionException)
+                                Toast.makeText(LoginActivity.this, "User with e-mail already exist!", Toast.LENGTH_SHORT).show();
+                            else {
+                                Log.w("PresenceActivity", "createUserWithEmail:failure", task.getException());
+                                Toast.makeText(LoginActivity.this, "User create failed.", Toast.LENGTH_LONG).show();
                             }
                         }
+
                     });
         }
     }
@@ -283,32 +327,32 @@ public class LoginActivity extends AppCompatActivity {
      * If an active year is found, it's saved to SharedPreferences, and the user is navigated to {@link PresenceActivity}.
      * If no active year is found (e.g., for a user who previously registered but didn't set an active year),
      * it calls {@link #setActiveYear()} to prompt the user to choose one.
+     *
      * @deprecated This method seems to fetch a global last year, not user-specific.
-     *             Consider fetching user-specific active year from their profile or redesigning.
-     *             If it's intended to be a global last year, its usage after login is questionable.
+     * Consider fetching user-specific active year from their profile or redesigning.
+     * If it's intended to be a global last year, its usage after login is questionable.
      */
     private void lostData() {
         Query query = refYears.orderByKey().limitToLast(1);
-        query.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>(){
+        query.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull com.google.android.gms.tasks.Task<DataSnapshot> tsk) {
                 if (tsk.isSuccessful()) {
                     DataSnapshot dS = tsk.getResult();
-                    for(DataSnapshot data : dS.getChildren()) {
+                    for (DataSnapshot data : dS.getChildren()) {
                         activeYear = Integer.parseInt(data.getKey());
                     }
                     if (activeYear == 1970) {
                         setActiveYear();
                     } else {
-                        SharedPreferences.Editor editor=settings.edit();
-                        editor.putInt("activeYear",activeYear);
-                        editor.putBoolean("stayConnect",cBstayconnect.isChecked());
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putInt("activeYear", activeYear);
+                        editor.putBoolean("stayConnect", cBstayconnect.isChecked());
                         editor.commit();
-                        Intent si = new Intent(LoginActivity.this,PresenceActivity.class);
+                        Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
                         startActivity(si);
                     }
-                }
-                else {
+                } else {
                     Log.e("firebase", "Error getting data", tsk.getException());
                 }
             }
@@ -320,8 +364,8 @@ public class LoginActivity extends AppCompatActivity {
      * The result (the selected year) is expected back in {@link #onActivityResult(int, int, Intent)}.
      */
     private void setActiveYear() {
-        Intent sifr = new Intent(LoginActivity.this,YearsActivity.class);
-        sifr.putExtra("isNewUser",true);
+        Intent sifr = new Intent(LoginActivity.this, YearsActivity.class);
+        sifr.putExtra("isNewUser", true);
         startActivityForResult(sifr, REQUEST_CODE);
     }
 
@@ -347,9 +391,9 @@ public class LoginActivity extends AppCompatActivity {
             if (resultCode == Activity.RESULT_OK) {
                 if (data != null) {
                     activeYear = data.getIntExtra("activeYear", 1970);
-                    SharedPreferences.Editor editor=settings.edit();
-                    editor.putInt("activeYear",activeYear);
-                    editor.putBoolean("stayConnect",cBstayconnect.isChecked());
+                    SharedPreferences.Editor editor = settings.edit();
+                    editor.putInt("activeYear", activeYear);
+                    editor.putBoolean("stayConnect", cBstayconnect.isChecked());
                     editor.commit();
                     final Intent si = new Intent(LoginActivity.this, PresenceActivity.class);
                     // delay navigation until students are ready
