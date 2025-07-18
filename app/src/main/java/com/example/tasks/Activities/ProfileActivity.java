@@ -1,6 +1,5 @@
 package com.example.tasks.Activities;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -13,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
@@ -39,6 +37,7 @@ public class ProfileActivity extends MasterActivity {
 
     private DatabaseReference userRef;
     private FirebaseUser currentUser;
+    private boolean isSpinnersLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +58,7 @@ public class ProfileActivity extends MasterActivity {
                 .child(currentUser.getUid());
 
         // Populate spinners
-        List<String> years = Arrays.asList("2021","2022","2023","2024","2025","2026");
+        List<String> years = Arrays.asList("2023","2024","2025","2026");
         ArrayAdapter<String> yearAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, years);
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -71,20 +70,26 @@ public class ProfileActivity extends MasterActivity {
         screenAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         defaultScreenSpinner.setAdapter(screenAdapter);
 
-        // Load existing data
-        loadProfile();
-
-        // Listeners for saving
+        // Listeners for saving (ignore initial selections)
         activeYearSpinner.setOnItemSelectedListener(new SimpleItemSelectedListener() {
-            @Override public void onItemSelected(String value) {
-                userRef.child("activvvYear").setValue(value);
+            @Override
+            public void onItemSelected(String value) {
+                if (isSpinnersLoaded) {
+                    userRef.child("activvvYear").setValue(value);
+                }
             }
         });
         defaultScreenSpinner.setOnItemSelectedListener(new SimpleItemSelectedListener() {
-            @Override public void onItemSelected(String value) {
-                userRef.child("preferredActivity").setValue(value);
+            @Override
+            public void onItemSelected(String value) {
+                if (isSpinnersLoaded) {
+                    userRef.child("preferredActivity").setValue(value);
+                }
             }
         });
+
+        // Load existing data
+        loadProfile();
 
         takePictureBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
@@ -101,18 +106,16 @@ public class ProfileActivity extends MasterActivity {
                 String uname = snap.child("username").getValue(String.class);
                 if (uname != null) usernameEdit.setText(uname);
 
-                // Active year: try new 'activvvYear' then fallback to old key (userId)
+                // Active year: new key then fallback
                 String year = snap.child("activvvYear").getValue(String.class);
                 if (year == null) {
-                    // fallback to legacy key named as UID
                     year = snap.child(currentUser.getUid()).getValue(String.class);
                     if (year != null) {
-                        // persist to new location
                         userRef.child("activvvYear").setValue(year);
                     }
                 }
                 if (year != null) {
-                    ArrayAdapter adapter = (ArrayAdapter) activeYearSpinner.getAdapter();
+                    ArrayAdapter<String> adapter = (ArrayAdapter<String>) activeYearSpinner.getAdapter();
                     int pos = adapter.getPosition(year);
                     if (pos >= 0) activeYearSpinner.setSelection(pos);
                 }
@@ -120,9 +123,9 @@ public class ProfileActivity extends MasterActivity {
                 // Default screen
                 String screen = snap.child("preferredActivity").getValue(String.class);
                 if (screen != null) {
-                    ArrayAdapter adapter = (ArrayAdapter) defaultScreenSpinner.getAdapter();
-                    int pos = adapter.getPosition(screen);
-                    if (pos >= 0) defaultScreenSpinner.setSelection(pos);
+                    ArrayAdapter<String> adapter2 = (ArrayAdapter<String>) defaultScreenSpinner.getAdapter();
+                    int pos2 = adapter2.getPosition(screen);
+                    if (pos2 >= 0) defaultScreenSpinner.setSelection(pos2);
                 }
 
                 // Profile image
@@ -131,7 +134,11 @@ public class ProfileActivity extends MasterActivity {
                     byte[] data = Base64.decode(b64, Base64.DEFAULT);
                     profileImage.setImageBitmap(BitmapFactory.decodeByteArray(data,0,data.length));
                 }
+
+                // Now allow spinner callbacks to write changes
+                isSpinnersLoaded = true;
             }
+
             @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
