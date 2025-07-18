@@ -64,7 +64,7 @@ public class ProfileActivity extends MasterActivity {
         yearAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         activeYearSpinner.setAdapter(yearAdapter);
 
-        List<String> screens = Arrays.asList("Presence", "Task", "Reports", "MainTask");
+        List<String> screens = Arrays.asList("Presence", "Reports", "Profile", "Task",  "MainTask");
         ArrayAdapter<String> screenAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_item, screens);
         screenAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -130,7 +130,7 @@ public class ProfileActivity extends MasterActivity {
                 }
 
                 // Profile image
-                String b64 = snap.child("profileImage").getValue(String.class);
+                String b64 = snap.child("b64jpg").getValue(String.class);
                 if (b64 != null) {
                     byte[] data = Base64.decode(b64, Base64.DEFAULT);
                     profileImage.setImageBitmap(BitmapFactory.decodeByteArray(data, 0, data.length));

@@ -264,6 +264,8 @@ public class LoginActivity extends AppCompatActivity {
                                                 target = TaskActivity.class;
                                             } else if ("MainTask".equals(pref)) {
                                                 target = MainActivity.class;
+                                            } else if ("Profile".equals(pref)) {
+                                                target = ProfileActivity.class;
                                             } else if ("Reports".equals(pref)) {
                                                 target = ReportsActivity.class;
                                             } else {
