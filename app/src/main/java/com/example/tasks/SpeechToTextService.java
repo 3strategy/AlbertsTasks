@@ -16,8 +16,8 @@ public class SpeechToTextService {
 
     private SpeechRecognizer speechRecognizer;
     private Intent speechIntent;
-    private OnSpeechRecognizedListener listener;
-    private Context context;
+    private final OnSpeechRecognizedListener listener;
+    private final Context context;
 
     public SpeechToTextService(Context context, OnSpeechRecognizedListener listener) {
         this.context = context;

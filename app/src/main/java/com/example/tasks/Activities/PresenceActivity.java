@@ -13,22 +13,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.graphics.Insets;
-import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.tasks.Obj.MasterActivity;
 import com.example.tasks.R;
 import com.example.tasks.SpeechToTextService;
 import com.example.tasks.models.Student;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ServerValue;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,8 +36,6 @@ import java.util.Set;
 
 import static com.example.tasks.FBRef.allStudents;
 import static com.example.tasks.FBRef.refPresUidCurrentWeek;
-import static com.example.tasks.FBRef.refPresenceRoot;
-//import static com.example.tasks.FBRef.refPresenceYear;
 
 
 public class PresenceActivity extends MasterActivity {
